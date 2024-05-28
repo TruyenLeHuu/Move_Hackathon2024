@@ -45,7 +45,7 @@ class CarlaClient():
         self._hand_brake = 0
         self._throttle = 0
         self._reverse = 0
-        self.manual_gear_shift = True
+        self.manual_gear_shift = False
         self.gear = 0
 
         rospy.loginfo('Step 0 - Set up scenarios DONE')
