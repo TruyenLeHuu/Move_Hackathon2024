@@ -2,7 +2,7 @@
 Before run Framework, sure that you installed ROS (Noetic) and Carla (version >= 0.9.13).
 
 # Initial
-Step1: Build ros package 02_RosCommunication -> source to this package (run devel\setup.bat to link packet with terminal)
+Step1: Build ros package 02_RosCommunication -> source to this package (run devel\setup.bat to link package with terminal)
 
 Step2: In the same terminal, build ros package 01_RosBridge -> source to this package (this source step is important, need do this first at any terminal).
 
