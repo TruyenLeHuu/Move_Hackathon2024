@@ -777,12 +777,7 @@ class DualControl(object):
 
         # Start the thread
         thread.start()
-
-
-    def create_path(self, start_point, end_point):
-        # Create a simple linear path from start_point to end_point
-        return [start_point, carla.Location(start_point.x, end_point.y, end_point.z), end_point]
-
+        
     def move_pedestrian_along_path(self, pedestrian, start_point, end_point):
         # Move the pedestrian along the predefined path
         # print(pygame.time.Clock().tick())
@@ -792,25 +787,68 @@ class DualControl(object):
         pedestrian_control.direction = (end_point - start_point).make_unit_vector()
         pedestrian.apply_control(pedestrian_control)
 
-        while pedestrian.get_location().distance(end_point) > 2.0:
-            time.sleep(1)
-        
-        pedestrian_control.speed = 0
-        pedestrian.apply_control(pedestrian_control)
 
+        while (pedestrian.get_location().distance(end_point) > 20.0):
+            time.sleep(1)
+        pedestrian_control1 = carla.WalkerControl()
+        pedestrian_control1.speed = 0
+        pedestrian.apply_control(pedestrian_control1)
+
+        while (pedestrian.get_location().distance(self._parent.vehicle_controller.vehicle.get_transform().location) > 15):
+            time.sleep(1)
+        time.sleep(8)
+        pedestrian.apply_control(pedestrian_control)
+        time.sleep(15)
         pedestrian.destroy()
 
     def create_pedestria_1(self, world):
         # Define the start and end points of the crosswalk
-        start_point = carla.Location(x=18, y=10, z=0.5)  # Adjust the coordinates as needed
-        end_point = carla.Location(x=18, y=-7, z=0.5)  # Adjust the coordinates as needed
+        start_point = carla.Location(x=42, y=-11, z=1)  # Adjust the coordinates as needed
+        end_point = carla.Location(x=42, y=13, z=0.5)  # Adjust the coordinates as needed
 
         # Create a path for the pedestrian
-        path = self.create_path(start_point, end_point)
+        path = [start_point, carla.Location(start_point.x, end_point.y, end_point.z), end_point]
 
         # Spawn the pedestrian at the start point of the crosswalk
         self.create_pedestrian(world, start_point, end_point)
+
+    def create_car_1(self, world):
+        # Define the start and end points of the crosswalk
+        start_point = carla.Location(x=66.5, y=5.1, z=1)  # Adjust the coordinates as needed
+        end_point = carla.Location(x=42, y=13, z=0.5)  # Adjust the coordinates as needed
+
+        # blueprint = random.choice(world.get_blueprint_library().filter('vehicle.dodge.charger_2020'))
+
+        blueprint = random.choice(world.get_blueprint_library().filter("vehicle.ford.ambulance"))
+        if blueprint.has_attribute("driver_id"):
+            driver_id = random.choice(
+                blueprint.get_attribute("driver_id").recommended_values
+            )
+            blueprint.set_attribute("driver_id", driver_id)
+        try:
+            blueprint.set_attribute("role_name", "autopilot")
+        except IndexError:
+            pass
+        vehicle_init_position  = [
+            carla.Transform(start_point, carla.Rotation(yaw=-2))]
+
+        self.vehicle_1 = world.spawn_actor(blueprint, vehicle_init_position[0])
+
+        thread = threading.Thread(target=self.control_car_1)
         
+        # Start the thread
+        thread.start()
+
+    def control_car_1(self):
+        self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
+        time.sleep(4.6)
+        self.vehicle_1.apply_control(carla.VehicleControl(throttle=0.0, brake=1.0))
+        time.sleep(4)
+        self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
+        time.sleep(10)
+        self.vehicle_1.destroy()
+
+
     def parse_events(self, world, clock, player, world_carla):
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -885,25 +923,25 @@ class DualControl(object):
                     # self._parent.move_to_parking_slot()
                     # self._parent.move_to_parking_slot()
                     # spawn_points = world.get_map().get_spawn_points()
-                    blueprint = random.choice(world_carla.get_blueprint_library().filter('vehicle.dodge.charger_2020'))
-                    # blueprints = world.get_blueprint_library().filter("vehicle.*")
-                    if blueprint.has_attribute("driver_id"):
-                        driver_id = random.choice(
-                            blueprint.get_attribute("driver_id").recommended_values
-                        )
-                        blueprint.set_attribute("driver_id", driver_id)
-                    try:
-                        blueprint.set_attribute("role_name", "autopilot")
-                    except IndexError:
-                        pass
-                    vehicle_init_position  = [
-                        carla.Transform(carla.Location(x=-265, y=-21, z=0.05), carla.Rotation(yaw=270))]
+                    # blueprint = random.choice(world_carla.get_blueprint_library().filter('vehicle.dodge.charger_2020'))
+                    # # blueprints = world.get_blueprint_library().filter("vehicle.*")
+                    # if blueprint.has_attribute("driver_id"):
+                    #     driver_id = random.choice(
+                    #         blueprint.get_attribute("driver_id").recommended_values
+                    #     )
+                    #     blueprint.set_attribute("driver_id", driver_id)
+                    # try:
+                    #     blueprint.set_attribute("role_name", "autopilot")
+                    # except IndexError:
+                    #     pass
+                    # vehicle_init_position  = [
+                    #     carla.Transform(carla.Location(x=-265, y=-21, z=0.05), carla.Rotation(yaw=270))]
 
-                    vehicle = world_carla.spawn_actor(blueprint, vehicle_init_position[0])
+                    # vehicle = world_carla.spawn_actor(blueprint, vehicle_init_position[0])
 
-                    vehicle.set_autopilot(True)
-                    vehicle.enable_constant_velocity(carla.Vector3D(2, 0, 0))
-
+                    # vehicle.set_autopilot(True)
+                    # vehicle.enable_constant_velocity(carla.Vector3D(2, 0, 0))
+                    self.create_car_1(world_carla)
                 elif event.key == K_o:
                     # self._parent.is_parking = 1 if self._parent.is_parking == 0 else 0
                     # self._parent.state = 0 if self._parent.state == -1 else -1
