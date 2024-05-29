@@ -19,6 +19,10 @@ class Scenario_Runner():
         self.actor_list = []
         self.lights = carla.VehicleLightState.NONE
         self.door_status = 0
+        self.time_stop = 0
+        self.is_in_stop = False
+        self.is_cross_stop = False
+        self.is_successful_stop = False
 
     # def order_points_counterclockwise(self, points):
     #     # Calculate the centroid of the polygon
@@ -59,6 +63,24 @@ class Scenario_Runner():
         vehicle_location = vehicle.get_transform().location
         vehicle_point = (vehicle_location.x, vehicle_location.y)
         return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.weather_area_2)
+    
+    def is_vehicle_in_stop_area_1(self, vehicle):
+        vehicle_location = vehicle.get_transform().location
+        vehicle_point = (vehicle_location.x, vehicle_location.y)
+        return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.stop_area_1)
+    
+    def counting_stop_point(self, vehicle):
+        if (self.is_vehicle_in_stop_area_1(vehicle)):
+            if (not self.is_in_stop):
+                self.time_stop = time.time()
+                self.is_in_stop = True
+            if (not self.is_successful_stop and time.time() - self.time_stop > 3):
+                print("enough!")
+                self.is_successful_stop = True
+        elif (not self.is_successful_stop and self.is_in_stop and time.time() - self.time_stop > 4):
+                print("not enough!")
+                self.is_successful_stop = True
+
 
     def destroy(self):
         """

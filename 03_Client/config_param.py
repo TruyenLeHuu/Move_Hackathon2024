@@ -54,6 +54,13 @@ class RoundOneScenario():
                 (-40, 30)   # Point 4 (x, y)
             ]
 
+            self.stop_area_1 = [
+                (-86, 90),  # Point 1 (x, y)
+                (-91.3, 90),  # Point 2 (x, y)
+                (-91.3, 97.7),  # Point 3 (x, y)
+                (-86, 97.7)   # Point 4 (x, y)
+            ]
+
             self.parking_first_point = 0.0
             self.vehicle_init_position  = [
                 carla.Transform(carla.Location(x=-265, y=-10, z=0.05), carla.Rotation(yaw=270))]
