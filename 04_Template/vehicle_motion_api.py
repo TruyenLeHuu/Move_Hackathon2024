@@ -79,7 +79,7 @@ class General():
         Begin VMP API
        ==========================================================================================================================================="""
     
-    """ Set override is True to enable vehicle_control_manual api, False to disable"""
+    """ Set override is "True" to enable vehicle_control_manual api, "False" to disable"""
     def vehicle_control_manual_override(self, override):
         # Create a publisher for the vehicle control command
         override_msg = override
@@ -312,7 +312,8 @@ class General():
     }
     """
     def get_traffic_lights(self):
-        return self.traffic_lights_status
+        if (not self.traffic_lights_status == None):
+            return self.traffic_lights_status.traffic_lights
     
     """ Traffic sign value return:
     {   
