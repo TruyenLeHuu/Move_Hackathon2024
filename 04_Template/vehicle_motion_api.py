@@ -74,25 +74,18 @@ class General():
 
         # Set up a callback for Ctrl + C
         rospy.on_shutdown(self.shutdown)
-
-    def subcribe_carla_topics(self):
-        rospy.Subscriber(   "/clock", Clock, self.get_carla_clock)
-        rospy.Subscriber(   "/carla/hero/vehicle_status", CarlaEgoVehicleStatus, self.get_carla_vehicle_status)
-        rospy.Subscriber(   "/carla/hero/vehicle_info", CarlaEgoVehicleInfo, self.get_carla_vehicle_info)
-        rospy.Subscriber(   "/carla/hero/odometry", Odometry, self.get_carla_odometry)
-        rospy.Subscriber(   "/carla/hero/gnss", NavSatFix, self.get_vehicle_gnss)
-        rospy.Subscriber(   "/carla/hero/imu", Imu, self.get_vehicle_imu)
-        rospy.Subscriber(   "/carla/hero/obstacle", CarlaEgoVehicleObstacle, self.get_vehicle_obstacle)
-        rospy.Subscriber(   "/carla/hero/vehicle_door_status", CarlaEgoVehicleDoorStatus, self.get_door_status)
-        rospy.Subscriber(   "/carla/traffic_light_status", CarlaTrafficLightList, self.get_traffic_light_status)
-        rospy.Subscriber(   "/carla/traffic_sign_info", CarlaTrafficSignList, self.get_traffic_sign_info)
-        rospy.Subscriber(   "/carla/weather_status", String, self.get_weather_status)
-
+        
+    """===========================================================================================================================================
+        Begin VMP API
+       ==========================================================================================================================================="""
+    
+    """ Set override is True to enable vehicle_control_manual api, False to disable"""
     def vehicle_control_manual_override(self, override):
         # Create a publisher for the vehicle control command
         override_msg = override
         self.control_override_pub.publish(override_msg)
 
+    """ Control manual vehicle with code"""
     def vehicle_control_manual(self, throttle=0.0, steer=0.0, brake=0.0, hand_brake=False, reverse=False, manual_gear_shift=False, gear=0):
         # Create a message object
         control_msg = CarlaEgoVehicleControl()
@@ -105,7 +98,7 @@ class General():
         control_msg.gear = gear
         # Publish the message
         self.control_manual_pub.publish(control_msg)
-
+    """ Control vehicle with code and wheel hardware overlap"""
     def vehicle_control(self, throttle=0.0, steer=0.0, brake=0.0, hand_brake=False, reverse=False, manual_gear_shift=False, gear=0):
         # Create a message object
         control_msg = CarlaEgoVehicleControl()
@@ -155,11 +148,9 @@ class General():
 
     def vehicle_control_toggle_door_FL(self):
         self.door_FL_control.publish(1)
-
     
     def vehicle_control_toggle_door_RL(self):
         self.door_RL_control.publish(1)
-
     
     def vehicle_control_toggle_door_FR(self):
         self.door_FR_control.publish(1)
@@ -167,6 +158,9 @@ class General():
     def vehicle_control_toggle_door_RR(self):
         self.door_RR_control.publish(1)
     
+    """ Input control: "On"/"Off"
+        1.2 (m/s)
+    """
     def vehicle_control_light(self, control):
         self.light_control.publish(control)
 
@@ -223,8 +217,6 @@ class General():
     
     """ Control value return:
     {   
-        header: 
-        seq: 0
         stamp: 
             secs: 0
             nsecs:         0
@@ -289,22 +281,95 @@ class General():
     def get_vehicle_obstacle(self):
         return self.vehicle_obstacle
     
+    """ Vehicle door value return:
+    {   
+        FL: "Close"/"Open"
+        FR: "Close"/"Open"
+        RL: "Close"/"Open"
+        RR: "Close"/"Open"
+    }
+    """
     def get_vehicle_door(self):
         return self.door_status
     
+    """ Traffic light value return:
+    {   
+        [{
+            id: 213,
+            transform: {
+            
+            },
+            state: 0/1/2 (RED=0 YELLOW=1 GREEN=2)
+        },
+        {
+            id: 214,
+            transform: {
+            
+            },
+            state: 0/1/2 (RED=0 YELLOW=1 GREEN=2)
+        },...
+        ]
+    }
+    """
     def get_traffic_lights(self):
         return self.traffic_lights_status
     
+    """ Traffic sign value return:
+    {   
+        [{
+            id: 217,
+            transform: {
+            
+            },
+            type: 1/.../10      #   Stop = 1
+                                #   Speed Limited 40 = 2
+                                #   Speed Limited 60 = 3
+                                #   Speed Limited 90 = 4
+                                #   Direct Turn Left = 5
+                                #   Direct Turn Right = 6
+                                #   Direct Straight = 7
+                                #   Prohibiting right turn = 8
+                                #   Prohibiting left turn = 9
+                                #   Prohibiting straight turn = 10
+        },
+        {
+            id: 219,
+            transform: {
+            
+            },
+            type: 1/.../10      #   Stop = 1
+                                #   Speed Limited 40 = 2
+                                #   Speed Limited 60 = 3
+                                #   Speed Limited 90 = 4
+                                #   Direct Turn Left = 5
+                                #   Direct Turn Right = 6
+                                #   Direct Straight = 7
+                                #   Prohibiting right turn = 8
+                                #   Prohibiting left turn = 9
+                                #   Prohibiting straight turn = 10
+        },...
+        ]
+    }
+    """
     def get_traffic_signs(self):
         return self.traffic_sign_info
     
+    """ Weather value return:
+    {     
+        "ClearDay"/ "ClearNight"/ "DayRaining"/ "DayAfterRain"
+    }
+    """
     def get_weather(self):
         return self.weather
+
+    """===========================================================================================================================================
+       Finish VMP API 
+       ==========================================================================================================================================="""
     
     def get_carla_clock(self, message):
         self.clock = message
 
-    def get_carla_vehicle_status(self, msg):
+    def get_carla_vehicle_status_msg(self, msg):
         self.vehicle_velocity = msg.velocity
         self.vehicle_acceleration = msg.acceleration
         self.vehicle_orientation = msg.orientation
@@ -312,31 +377,31 @@ class General():
         self.vehicle_location = msg.location
         self.vehicle_controls = msg.control
 
-    def get_carla_vehicle_info(self, msg):
+    def get_carla_vehicle_info_msg(self, msg):
         """
         gets vehicle_info
         """
         self.vehicle_info = msg
     
-    def get_carla_odometry(self, msg):
+    def get_carla_odometry_msg(self, msg):
         """
         gets Odometry
         """
         self.odometry = msg
 
-    def get_vehicle_gnss(self, msg):
+    def get_vehicle_gnss_msg(self, msg):
         """
         gets Gnss
         """
         self.gnss = msg
 
-    def get_vehicle_imu(self, msg):
+    def get_vehicle_imu_msg(self, msg):
         """
         gets IMU sensor node
         """
         self.imu = msg
 
-    def get_vehicle_obstacle(self, msg):
+    def get_vehicle_obstacle_msg(self, msg):
         """
         gets obstacle sensor
         """
@@ -350,34 +415,48 @@ class General():
             msg.obstacle_distance = 200
         self.vehicle_obstacle = msg
     
-    def get_traffic_light_status(self, msg):
+    def get_traffic_light_status_msg(self, msg):
         """
-        gets traffic_lights
+        get traffic lights
         """
         self.traffic_lights_status = msg
     
-    def get_traffic_sign_info(self, msg):
+    def get_traffic_sign_info_msg(self, msg):
         """
-        gets traffic_lights
+        get traffic sign info
         """
         self.traffic_sign_info = msg
 
-    def get_weather_status(self, msg):
+    def get_weather_status_msg(self, msg):
         """
-        gets traffic_lights
+        get weather status
         """
         self.weather = msg.data
 
-    def get_door_status(self, msg):
+    def get_door_status_msg(self, msg):
         """
-        gets traffic_lights
+        get door status
         """
         self.door_status = msg
+
     
     def shutdown(self):
         # Set the exit flag when Ctrl + C is detected
         print("Shutting down")
         self.exit_flag = True
+
+    def subcribe_carla_topics(self):
+        rospy.Subscriber(   "/clock", Clock, self.get_carla_clock)
+        rospy.Subscriber(   "/carla/hero/vehicle_status", CarlaEgoVehicleStatus, self.get_carla_vehicle_status_msg)
+        rospy.Subscriber(   "/carla/hero/vehicle_info", CarlaEgoVehicleInfo, self.get_carla_vehicle_info_msg)
+        rospy.Subscriber(   "/carla/hero/odometry", Odometry, self.get_carla_odometry_msg)
+        rospy.Subscriber(   "/carla/hero/gnss", NavSatFix, self.get_vehicle_gnss_msg)
+        rospy.Subscriber(   "/carla/hero/imu", Imu, self.get_vehicle_imu_msg)
+        rospy.Subscriber(   "/carla/hero/obstacle", CarlaEgoVehicleObstacle, self.get_vehicle_obstacle_msg)
+        rospy.Subscriber(   "/carla/hero/vehicle_door_status", CarlaEgoVehicleDoorStatus, self.get_door_status_msg)
+        rospy.Subscriber(   "/carla/traffic_light_status", CarlaTrafficLightList, self.get_traffic_light_status_msg)
+        rospy.Subscriber(   "/carla/traffic_sign_info", CarlaTrafficSignList, self.get_traffic_sign_info_msg)
+        rospy.Subscriber(   "/carla/weather_status", String, self.get_weather_status_msg)
 
     # def get_camera_info(self):
     #     """
@@ -543,8 +622,6 @@ class General():
     #         "/carla/traffic_lights/info", CarlaTrafficLightInfoList, timeout=TIMEOUT)
     #     return msg
     #     self.assertNotEqual(len(msg.traffic_lights), 0)
-
-
 
 class VehicleMotionAPI():
 
