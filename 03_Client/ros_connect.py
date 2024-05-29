@@ -114,6 +114,7 @@ class RosConnect():
     def get_traffic_status(self, message):
         try:
             index = 0
+            self.traffic_light_list.traffic_lights = []
             for traffic_status in message.traffic_lights:
                 traffic_light = CarlaTrafficLight()
                 traffic_light.id = traffic_status.id
