@@ -180,6 +180,8 @@ class HUD(object):
         self.invasion = 0
         self.collision = 0
         self.crossRTL = 0
+        self.crossStop = 0
+        self.exceedSpeed = 0
 
         self.detectedTSDSpeed = 0
         self.detectedTSDStop = 0
@@ -189,8 +191,12 @@ class HUD(object):
         self.detectedCar = 0
         self.detectedWeather = 0
         self.detectedDoor = 0
+        self.short_time_distance = 0
+        self.long_time_distance = 0
+        self.is_minus = 0
         self.score = 100
         self.ros = _ros
+        self.vehicle_speed = 0
         self.dim = (width, height)
         font = pygame.font.Font(pygame.font.get_default_font(), 20)
         font_name = 'courier' if os.name == 'nt' else 'mono'
@@ -245,7 +251,8 @@ class HUD(object):
         max_col = max(1.0, max(collision))
         collision = [x / max_col for x in collision]
         vehicles = world.world.get_actors().filter('static.*')
-        self.ros.publish_speed(int(round(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2), 0)))
+        self.vehicle_speed = int(round(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2), 0))
+        self.ros.publish_speed(self.vehicle_speed)
         self.ros.publish_brake(round(c.brake*110, 2))
         self.ros.publish_steer(int(round(c.steer*540,0)))
         self._info_text = [
@@ -281,51 +288,73 @@ class HUD(object):
             '',]
     
         self._info_text += [
+            'Rule: ',
             'Number of lane invasion: % 4d' % self.invasion
             ]
         self._info_text += [
-            'Number of collision: % 4d' % self.collision
+            'Number of collision: % 8d' % self.collision
             ]
         self._info_text += [
-            'Number of cross Red TL: % 4d' % self.crossRTL
+            'Cross red traffic light: % 4d' % self.crossRTL
             ]
         self._info_text += [
-            'Number of cross Red TL: % 4d' % self.crossRTL
+            'Cross stop sign: % 12d' % self.crossStop
+        ]
+        self._info_text += [
+            'Exceed speed limit: % d' % self.exceedSpeed
             ]
         self._info_text += [
             'Score: % 4d' % self.score
             ]
         self._info_text += [
-            'Traffic sign detected (stop): % 4d' % self.detectedTSDStop
+            '',
+            "Dev: "
             ]
         self._info_text += [
-            'TSD (Speed Limited): % 4d' % self.detectedTSDSpeed
+            'Traffic sign detected:',
+            '    Stop: % 12d' % self.detectedTSDStop
             ]
         self._info_text += [
-            'TSD (Direct): % 4d' % self.detectedTSDDirect
+            '    Speed Limited: % 3d' % self.detectedTSDSpeed
             ]
         self._info_text += [
-            'Traffic light detected: % 4d' % self.detectedTrafficLight
+            '    Direct: % 10d' % self.detectedTSDDirect
             ]
         self._info_text += [
-            'Pedestrian detected: % 4d' % self.detectedPedestrian
+            'Traffic light detected: % 3d' % self.detectedTrafficLight
             ]
         self._info_text += [
-            'Car detected: % 4d' % self.detectedCar
+            'Pedestrian detected: % 6d' % self.detectedPedestrian
             ]
         self._info_text += [
-            'Weather detected: % 4d' % self.detectedWeather
+            'Car detected: % 13d' % self.detectedCar
             ]
         self._info_text += [
-            'Door open detected: % 4d' % self.detectedDoor
+            'Weather detected: % 9d' % self.detectedWeather
+            ]
+        self._info_text += [
+            'Door open detected: % 7d' % self.detectedDoor
             ]
     def toggle_info(self):
         self._show_info = not self._show_info
 
-    def minus_score(self, score_minus):
-        self.score = self.score - score_minus
-        time.sleep(0.1)
+    def short_minus_score(self, score_minus):
+        if (time.time() - self.short_time_distance >= 0.5):
+            self.score = self.score - score_minus
+            self.short_time_distance = time.time()
         
+    def long_minus_score(self, score_minus):
+        if (time.time() - self.long_time_distance > 1):
+            self.score = self.score - score_minus
+            self.long_time_distance = time.time()
+
+    def long_minus_score_with_condition(self, score_minus):
+        if (self.is_minus):
+            if (time.time() - self.long_time_distance > 1):
+                self.exceedSpeed = self.exceedSpeed + 1
+                self.score = self.score - score_minus
+                self.long_time_distance = time.time()
+
     def notification(self, text, seconds=2.0):
         self._notifications.set_text(text, seconds=seconds)
 
@@ -465,7 +494,7 @@ class CollisionSensor(object):
         # print(intensity)
         if (intensity > 500):
         # self.hud.score = self.hud.score - 1
-            self.hud.minus_score(1)
+            self.hud.short_minus_score(1)
             self.hud.collision+=1
             self.hud.notification('Collision with %r => score - 1' % actor_type)
         self.history.append((event.frame, intensity))
@@ -499,7 +528,7 @@ class LaneInvasionSensor(object):
         self.hud.invasion = self.hud.invasion + 1
         lane_types = set(x.type for x in event.crossed_lane_markings)
         text = ['%r' % str(x).split()[-1] for x in lane_types]
-        self.hud.score = self.hud.score - 1
+        self.hud.short_minus_score(1)
         self.hud.notification('Crossed line => score - 1', seconds = 1)
         
 
@@ -544,7 +573,7 @@ class ObstacleDetector(object):
         #     return
         # type_ids = set(x.type_id for x in event.other_actor)
         # text = ['%r' % str(x).split()[-1] for x in type_ids]
-        self.hud.notification(get_actor_display_name(event.other_actor))
+        # self.hud.notification(get_actor_display_name(event.other_actor))
 
 # class Obstacle_Sensor(object):
 #     def __init__(self, parent_actor):

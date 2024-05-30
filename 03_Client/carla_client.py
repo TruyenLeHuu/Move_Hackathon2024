@@ -74,7 +74,10 @@ class CarlaClient():
                 self.ros_connection.publish_status()
                 self.ros_connection.publish_obstacle_distance()
                 self.ros_connection.publish_traffic_sign_info()
-                self.scenario_runner.counting_stop_point(self.vehicle_controller.vehicle)
+                self.scenario_runner.counting_stop_point(self.vehicle_controller.vehicle, hud)
+                self.scenario_runner.check_speed_limited_1(self.vehicle_controller.vehicle, hud, controller, world_carla)
+                self.scenario_runner.check_pedestrian_1(self.vehicle_controller.vehicle, controller, world_carla)
+                hud.long_minus_score_with_condition(1)
                 # self.ros_connection.keep_topic_alive()
                 if (self.scenario_runner.is_vehicle_in_weather_area_1(self.vehicle_controller.vehicle)):
                     # if (world_carla.get_weather() != carla.WeatherParameters.ClearNight):
@@ -93,7 +96,7 @@ class CarlaClient():
                     self.ros_connection.vehicle_control_with_ros(self._throttle, self._steer, self._brake, self._reverse, self._hand_brake, self.manual_gear_shift, self.gear)
                 if (self.is_traffic_1 == False and self.scenario_runner.is_vehicle_in_traffic_area_1(self.vehicle_controller.vehicle) and self.ros_connection.tfl_134_status == 0):
                     hud.notification("Cross the red traffic light => score - 1")
-                    hud.minus_score(1)
+                    hud.short_minus_score(1)
                     hud.crossRTL+=1
                     self.is_traffic_1 = True
                 elif (self.is_traffic_1 == False and self.scenario_runner.is_vehicle_in_traffic_area_1(self.vehicle_controller.vehicle) and self.ros_connection.tfl_134_status == 1):

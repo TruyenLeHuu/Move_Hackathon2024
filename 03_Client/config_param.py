@@ -61,6 +61,27 @@ class RoundOneScenario():
                 (-86, 97.7)   # Point 4 (x, y)
             ]
 
+            self.limit_speed_start = [
+                (46, 75),  # Point 1 (x, y)
+                (41, 75),  # Point 2 (x, y)
+                (41, 98),  # Point 3 (x, y)
+                (46, 98)   # Point 4 (x, y)
+            ]
+
+            self.limit_speed_stop = [
+                (92, 41),  # Point 1 (x, y)
+                (92, 44.5),  # Point 2 (x, y)
+                (109, 44.5),  # Point 3 (x, y)
+                (109, 41)   # Point 4 (x, y)
+            ]
+
+            self.pedestrian_area_1 = [
+                (80, 10),  # Point 1 (x, y)
+                (90, 10),  # Point 2 (x, y)
+                (90, -10),  # Point 3 (x, y)
+                (80, -10)   # Point 4 (x, y)
+            ]
+
             self.parking_first_point = 0.0
             self.vehicle_init_position  = [
                 carla.Transform(carla.Location(x=-265, y=-10, z=0.05), carla.Rotation(yaw=270))]

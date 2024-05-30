@@ -23,6 +23,8 @@ class Scenario_Runner():
         self.is_in_stop = False
         self.is_cross_stop = False
         self.is_successful_stop = False
+        self.was_in_limit_speed_start = False
+        self.was_create_pedestrian = False
 
     # def order_points_counterclockwise(self, points):
     #     # Calculate the centroid of the polygon
@@ -69,18 +71,52 @@ class Scenario_Runner():
         vehicle_point = (vehicle_location.x, vehicle_location.y)
         return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.stop_area_1)
     
-    def counting_stop_point(self, vehicle):
+    def is_vehicle_in_limit_speed_start(self, vehicle):
+        vehicle_location = vehicle.get_transform().location
+        vehicle_point = (vehicle_location.x, vehicle_location.y)
+        return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.limit_speed_start)
+
+    def is_vehicle_in_limit_speed_stop(self, vehicle):
+        vehicle_location = vehicle.get_transform().location
+        vehicle_point = (vehicle_location.x, vehicle_location.y)
+        return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.limit_speed_stop)
+
+    def is_vehicle_in_limit_pedestrian_area_1(self, vehicle):
+        vehicle_location = vehicle.get_transform().location
+        vehicle_point = (vehicle_location.x, vehicle_location.y)
+        return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.pedestrian_area_1)
+
+    def counting_stop_point(self, vehicle, hud):
         if (self.is_vehicle_in_stop_area_1(vehicle)):
             if (not self.is_in_stop):
                 self.time_stop = time.time()
                 self.is_in_stop = True
             if (not self.is_successful_stop and time.time() - self.time_stop > 3):
-                print("enough!")
+                hud.notification("Stop satified!")
                 self.is_successful_stop = True
         elif (not self.is_successful_stop and self.is_in_stop and time.time() - self.time_stop > 4):
-                print("not enough!")
+                hud.short_minus_score(1)
+                hud.crossStop = hud.crossStop + 1
                 self.is_successful_stop = True
 
+    def check_speed_limited_1(self, vehicle, hud, controller, world_carla):
+        if (self.is_vehicle_in_limit_speed_start(vehicle) and not self.was_in_limit_speed_start):
+            self.was_in_limit_speed_start = True
+
+        if (self.is_vehicle_in_limit_speed_stop(vehicle) and self.was_in_limit_speed_start):
+            self.was_in_limit_speed_start = False
+            controller.create_car_1(world_carla)
+            
+        if (self.was_in_limit_speed_start and hud.vehicle_speed > 40):
+            hud.is_minus = True
+        else:
+            hud.is_minus = False
+
+    def check_pedestrian_1(self, vehicle, controller, world_carla):
+        if(self.is_vehicle_in_limit_pedestrian_area_1(vehicle) and not self.was_create_pedestrian):
+            controller.create_pedestria_1(world_carla)
+            self.was_create_pedestrian = True
+            
 
     def destroy(self):
         """
