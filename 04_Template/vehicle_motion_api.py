@@ -65,7 +65,7 @@ class General():
         self.door_RL_control = rospy.Publisher('/carla/hero/vehicle_toggle_RL_door', Int32, queue_size=10)
         self.door_RR_control = rospy.Publisher('/carla/hero/vehicle_toggle_RR_door', Int32, queue_size=10)
 
-        rospy.init_node('nvidia_node', anonymous=True)
+        rospy.init_node('dev_node', anonymous=True)
 
         self.subcribe_carla_topics()
 
@@ -74,6 +74,12 @@ class General():
 
         # Set up a callback for Ctrl + C
         rospy.on_shutdown(self.shutdown)
+
+        print("Initing...")
+        while (self.traffic_lights_status == None or self.traffic_sign_info == None ):
+            time.sleep(0.5)
+
+        
         
     """===========================================================================================================================================
         Begin VMP API
@@ -112,40 +118,6 @@ class General():
         # Publish the message
         self.control_pub.publish(control_msg)
 
-    def vehicle_control_throttle(self, throttle=0.0, steer=0.0, brake=0.0, hand_brake=False, reverse=False, manual_gear_shift=False, gear=0):
-
-        # Create a publisher for the vehicle control command
-        control_pub = rospy.Publisher('/carla/hero/vehicle_control_throttle', CarlaEgoVehicleControl, queue_size=10)
-
-        # Create a message object
-        control_msg = CarlaEgoVehicleControl()
-        control_msg.throttle = throttle
-        control_msg.steer = steer
-        control_msg.brake = brake
-        control_msg.hand_brake = hand_brake
-        control_msg.reverse = reverse
-        control_msg.manual_gear_shift = manual_gear_shift
-        control_msg.gear = gear
-        # Publish the message
-        control_pub.publish(control_msg)
-    
-    def vehicle_control_throttle_switch(self, throttle=0.0, steer=0.0, brake=0.0, hand_brake=False, reverse=False, manual_gear_shift=False, gear=0):
-
-        # Create a publisher for the vehicle control command
-        control_pub = rospy.Publisher('/carla/hero/vehicle_control_throttle_switch', CarlaEgoVehicleControl, queue_size=10)
-
-        # Create a message object
-        control_msg = CarlaEgoVehicleControl()
-        # control_msg.throttle = throttle
-        control_msg.steer = steer
-        control_msg.brake = brake
-        control_msg.hand_brake = hand_brake
-        control_msg.reverse = reverse
-        control_msg.manual_gear_shift = manual_gear_shift
-        control_msg.gear = gear
-        # Publish the message
-        control_pub.publish(control_msg)
-
     def vehicle_control_toggle_door_FL(self):
         self.door_FL_control.publish(1)
     
@@ -159,16 +131,15 @@ class General():
         self.door_RR_control.publish(1)
     
     """ Input control: "On"/"Off"
-        1.2 (m/s)
     """
     def vehicle_control_light(self, control):
         self.light_control.publish(control)
 
     """ Velocity value return:
-        1.2 (m/s)
+        1.2 (km/h)
     """
     def get_vehicle_velocity(self):
-        return self.vehicle_velocity
+        return self.vehicle_velocity*3.6
     
     """ Acceleration value return:
     {   
@@ -187,6 +158,7 @@ class General():
     
     """ Orientation value return:
     {   
+        x: 0.2341252356343
         y: -1.6292922383290965e-06
         z: 0.42434795213668
         w: 0.905499207903972
@@ -238,7 +210,13 @@ class General():
         gets vehicle_info
         """
         return self.vehicle_info
-
+    """ Odometry value return:
+        {   
+        x: 5.65587043762207
+        y: 1.3067572116851807
+        z: 0.0003060150193050504
+        }
+    """
     def get_odometry(self):
         """
         gets Odometry
@@ -297,19 +275,37 @@ class General():
         [{
             id: 213,
             transform: {
-            
+                position:
+                    x: 19.149999618530273
+                    y: 9.0
+                    z: 0.0
+                orientation:
+                    x: 0.0
+                    y: -0.0
+                    z: -0.9999999999997784
+                    w: 6.65790272530563e-07
             },
             state: 0/1/2 (RED=0 YELLOW=1 GREEN=2)
         },
         {
             id: 214,
             transform: {
-            
+                position:
+                    x: 19.149999618530273
+                    y: 9.0
+                    z: 0.0
+                orientation:
+                    x: 0.0
+                    y: -0.0
+                    z: -0.9999999999997784
+                    w: 6.65790272530563e-07
             },
             state: 0/1/2 (RED=0 YELLOW=1 GREEN=2)
         },...
         ]
     }
+
+    Example VM.General.get_traffic_lights()[1].transform.position
     """
     def get_traffic_lights(self):
         if (not self.traffic_lights_status == None):
@@ -320,40 +316,50 @@ class General():
         [{
             id: 217,
             transform: {
-            
+                position:
+                    x: 19.149999618530273
+                    y: 9.0
+                    z: 0.0
+                orientation:
+                    x: 0.0
+                    y: -0.0
+                    z: -0.9999999999997784
+                    w: 6.65790272530563e-07
             },
-            type: 1/.../10      #   Stop = 1
-                                #   Speed Limited 40 = 2
-                                #   Speed Limited 60 = 3
-                                #   Speed Limited 90 = 4
-                                #   Direct Turn Left = 5
-                                #   Direct Turn Right = 6
-                                #   Direct Straight = 7
-                                #   Prohibiting right turn = 8
-                                #   Prohibiting left turn = 9
-                                #   Prohibiting straight turn = 10
+            type: 1/.../10      
         },
         {
             id: 219,
             transform: {
-            
+                position:
+                    x: 19.149999618530273
+                    y: 9.0
+                    z: 0.0
+                orientation:
+                    x: 0.0
+                    y: -0.0
+                    z: -0.9999999999997784
+                    w: 6.65790272530563e-07
             },
-            type: 1/.../10      #   Stop = 1
-                                #   Speed Limited 40 = 2
-                                #   Speed Limited 60 = 3
-                                #   Speed Limited 90 = 4
-                                #   Direct Turn Left = 5
-                                #   Direct Turn Right = 6
-                                #   Direct Straight = 7
-                                #   Prohibiting right turn = 8
-                                #   Prohibiting left turn = 9
-                                #   Prohibiting straight turn = 10
+            type: 1/.../10      
+                #   Stop = 1
+                #   Speed Limited 40 = 2
+                #   Speed Limited 60 = 3
+                #   Speed Limited 90 = 4
+                #   Direct Turn Left = 5
+                #   Direct Turn Right = 6
+                #   Direct Straight = 7
+                #   Prohibiting right turn = 8
+                #   Prohibiting left turn = 9
+                #   Prohibiting straight turn = 10
         },...
         ]
     }
+
+    Example VM.General.get_traffic_signs()[1].transform.position
     """
     def get_traffic_signs(self):
-        return self.traffic_sign_info
+        return self.traffic_sign_info.traffic_signs
     
     """ Weather value return:
     {     
@@ -458,171 +464,6 @@ class General():
         rospy.Subscriber(   "/carla/traffic_light_status", CarlaTrafficLightList, self.get_traffic_light_status_msg)
         rospy.Subscriber(   "/carla/traffic_sign_info", CarlaTrafficSignList, self.get_traffic_sign_info_msg)
         rospy.Subscriber(   "/carla/weather_status", String, self.get_weather_status_msg)
-
-    # def get_camera_info(self):
-    #     """
-    #     gets camera_info
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/hero/rgb_front/camera_info", CameraInfo, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "hero/rgb_front")
-    #     self.assertEqual(msg.height, 600)
-    #     self.assertEqual(msg.width, 800)
-
-    # def get_camera_image(self):
-    #     """
-    #     gets camera_images
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/hero/rgb_front/image", Image, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "hero/rgb_front")
-    #     self.assertEqual(msg.height, 600)
-    #     self.assertEqual(msg.width, 800)
-    #     self.assertEqual(msg.encoding, "bgra8")
-
-    # def get_dvs_camera_info(self):
-    #     """
-    #     gets dvs camera info
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/hero/dvs_front/camera_info", CameraInfo, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "hero/dvs_front")
-    #     self.assertEqual(msg.height, 70)
-    #     self.assertEqual(msg.width, 400)
-
-    # def get_dvs_camera_image(self):
-    #     """
-    #     gets dvs camera images
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/hero/dvs_front/image", Image, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "hero/dvs_front")
-    #     self.assertEqual(msg.height, 70)
-    #     self.assertEqual(msg.width, 400)
-    #     self.assertEqual(msg.encoding, "bgr8")
-
-    # def get_dvs_camera_events(self):
-    #     """
-    #     gets dvs camera events
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/hero/dvs_front/events", PointCloud2, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "hero/dvs_front")
-
-    # def get_lidar(self):
-    #     """
-    #     gets Lidar sensor node
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/hero/lidar", PointCloud2, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "hero/lidar")
-
-    # def get_semantic_lidar(self):
-    #     """
-    #     gets semantic_lidar sensor node
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/hero/semantic_lidar", PointCloud2, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "hero/semantic_lidar")
-
-    # def get_radar(self):
-    #     """
-    #     gets Radar sensor node
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/hero/radar_front", PointCloud2, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "hero/radar_front")
-
-    # def get_ego_vehicle_objects(self):
-    #     """
-    #     gets objects node for ego_vehicle
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/hero/objects", ObjectArray, timeout=15)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "map")
-    #     self.assertEqual(len(msg.objects), 0)
-
-    # def get_objects(self):
-    #     """
-    #     gets carla objects
-    #     """
-    #     msg = rospy.wait_for_message("/carla/objects", ObjectArray, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(msg.header.frame_id, "map")
-    #     self.assertEqual(len(msg.objects), 1)  # only ego vehicle exists
-
-    # def get_marker(self):
-    #     """
-    #     gets marker
-    #     """
-    #     msg = rospy.wait_for_message("/carla/markers", MarkerArray, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertEqual(len(msg.markers), 1)  # only ego vehicle exists
-
-    #     ego_marker = msg.markers[0]
-    #     self.assertEqual(ego_marker.header.frame_id, "map")
-    #     self.assertNotEqual(ego_marker.id, 0)
-    #     self.assertEqual(ego_marker.type, 1)
-    #     self.assertNotEqual(ego_marker.pose, Pose())
-    #     self.assertNotEqual(ego_marker.scale, Vector3())
-    #     self.assertEqual(ego_marker.color.r, 0.0)
-    #     self.assertEqual(ego_marker.color.g, 255.0)
-    #     self.assertEqual(ego_marker.color.b, 0.0)
-
-    # def get_map(self):
-    #     """
-    #     gets map
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/map", String, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertNotEqual(len(msg.data), 0)
-
-    # def get_world_info(self):
-    #     """
-    #     gets world_info
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/world_info", CarlaWorldInfo, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertNotEqual(len(msg.map_name), 0)
-    #     self.assertNotEqual(len(msg.opendrive), 0)
-
-    # def get_actor_list(self):
-    #     """
-    #     gets actor_list
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/actor_list", CarlaActorList, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertNotEqual(len(msg.actors), 0)
-
-    # def get_traffic_lights(self):
-    #     """
-    #     gets traffic_lights
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/traffic_lights/status", CarlaTrafficLightStatusList, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertNotEqual(len(msg.traffic_lights), 0)
-
-    # def get_traffic_lights_info(self):
-    #     """
-    #     gets traffic_lights
-    #     """
-    #     msg = rospy.wait_for_message(
-    #         "/carla/traffic_lights/info", CarlaTrafficLightInfoList, timeout=TIMEOUT)
-    #     return msg
-    #     self.assertNotEqual(len(msg.traffic_lights), 0)
 
 class VehicleMotionAPI():
 
