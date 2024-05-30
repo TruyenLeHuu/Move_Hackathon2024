@@ -16,10 +16,9 @@ def main():
             # VM.General.vehicle_control_manual(throttle=1, brake=0)
             # time.sleep(1)
             # VM.General.vehicle_control_manual(throttle=0, brake=1)
-            VM.General.vehicle_control_light("On")
-            time.sleep(1)
+            print(VM.General.get_weather())
+            time.sleep(0.01)
             # VM.General.vehicle_control_manual_override(False)
-            break
             
             """ End application code """
     except KeyboardInterrupt:
