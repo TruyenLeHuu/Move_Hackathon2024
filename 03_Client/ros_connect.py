@@ -13,6 +13,7 @@ from config_param import RoundOneScenario
 
 class RosConnect():
     def __init__(self, _vehicle_controller):
+        self.hud = None
         self.roundOneScenario = RoundOneScenario()
         self.vehicle_controller = _vehicle_controller
         self.tfl_134_status = 0
@@ -39,12 +40,34 @@ class RosConnect():
         self.pub_speed = rospy.Publisher('speed', String, queue_size=10)
         self.pub_obstacle_distance = rospy.Publisher('/carla/hero/obstacle', CarlaEgoVehicleObstacle, queue_size=10)
 
+        rospy.Subscriber('/carla/dev_trigger', String, self.dev_trigger)
         rospy.Subscriber('/carla/hero/vehicle_control_light', String, self.control_light)
         rospy.Subscriber('/carla/hero/vehicle_toggle_FR_door', Int32, self.toggle_FR_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_FL_door', Int32, self.toggle_FL_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_RR_door', Int32, self.toggle_RR_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_RL_door', Int32, self.toggle_RL_door)
         rospy.Subscriber('/carla/traffic_light/status', CarlaTrafficLightStatusList, self.get_traffic_status)
+
+    def take_hud(self, _hud):
+        self.hud = _hud
+
+    def dev_trigger(self, msg):
+        if (msg.data == "stop"):
+            self.hud.detectedTSDStop = 1
+        elif(msg.data == "speed"):
+            self.hud.detectedTSDSpeed = 1
+        elif(msg.data == "direct"):
+            self.hud.detectedTSDDirect = 1
+        elif(msg.data == "tl"):
+            self.hud.detectedTrafficLight = 1
+        elif(msg.data == "pedestrian"):
+            self.hud.detectedPedestrian = 1
+        elif(msg.data == "car"):
+            self.hud.detectedCar = 1
+        elif(msg.data == "weather"):
+            self.hud.detectedWeather = 1
+        elif(msg.data == "door"):
+            self.hud.detectedDoor = 1
 
     def toggle_FR_door(self, msg):
         if (msg.data):

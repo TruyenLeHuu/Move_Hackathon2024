@@ -65,6 +65,7 @@ class CarlaClient():
             pygame.HWSURFACE | pygame.DOUBLEBUF)
             self.vehicle_controller.create_car(world_carla)
             hud = HUD(1500, 800, self.ros_connection)
+            self.ros_connection.take_hud(hud)
             world = World(world_carla, hud, 'vehicle.*', self.vehicle_controller.vehicle, self.ros_connection)
             controller = DualControl(self)
             clock = pygame.time.Clock()

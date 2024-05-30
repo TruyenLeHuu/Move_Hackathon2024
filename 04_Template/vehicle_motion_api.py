@@ -64,6 +64,7 @@ class General():
         self.door_FR_control = rospy.Publisher('/carla/hero/vehicle_toggle_FR_door', Int32, queue_size=10)
         self.door_RL_control = rospy.Publisher('/carla/hero/vehicle_toggle_RL_door', Int32, queue_size=10)
         self.door_RR_control = rospy.Publisher('/carla/hero/vehicle_toggle_RR_door', Int32, queue_size=10)
+        self.dev_trigger = rospy.Publisher('/carla/dev_trigger', String, queue_size=10)
 
         rospy.init_node('dev_node', anonymous=True)
 
@@ -117,6 +118,23 @@ class General():
         control_msg.gear = gear
         # Publish the message
         self.control_pub.publish(control_msg)
+
+    def dev_detect_stop_sign(self):
+        self.dev_trigger.publish("stop")
+    def dev_detect_limit_speed_sign(self):
+        self.dev_trigger.publish("speed")
+    def dev_detect_direct_sign(self):
+        self.dev_trigger.publish("direct")
+    def dev_detect_traffic_light(self):
+        self.dev_trigger.publish("tl")
+    def dev_detect_pedestrian(self):
+        self.dev_trigger.publish("pedestrian")
+    def dev_detect_car(self):
+        self.dev_trigger.publish("car")
+    def dev_detect_weather(self):
+        self.dev_trigger.publish("weather")
+    def dev_detect_door(self):
+        self.dev_trigger.publish("door")
 
     def vehicle_control_toggle_door_FL(self):
         self.door_FL_control.publish(1)
