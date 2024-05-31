@@ -34,8 +34,8 @@ class Vehicle_Control():
         ap = random.choice(blueprint_library.filter('vehicle.dodge.charger_2020'))
 
         ap.set_attribute('role_name', "hero")
-        new_location = carla.Location(x=-33.8, y=6.4, z=0.5)
-        new_transform = carla.Transform(new_location, carla.Rotation(yaw=0))
+        new_location = carla.Location(x=-131.5, y=17.4, z=0.5)
+        new_transform = carla.Transform(new_location, carla.Rotation(yaw=90))
         
         # blueprint = random.choice(self.get_actor_blueprints(world, 'vehicle.*', "2"))
         # blueprint.set_attribute('role_name', "ego_vehicle")

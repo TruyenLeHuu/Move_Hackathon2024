@@ -25,6 +25,8 @@ class Scenario_Runner():
         self.is_successful_stop = False
         self.was_in_limit_speed_start = False
         self.was_create_pedestrian = False
+        self.is_pass_traffic_1 = False
+        self.is_pass_traffic_2 = False
 
     # def order_points_counterclockwise(self, points):
     #     # Calculate the centroid of the polygon
@@ -56,6 +58,11 @@ class Scenario_Runner():
         vehicle_point = (vehicle_location.x, vehicle_location.y)
         return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.traffic_area_1)
 
+    def is_vehicle_in_traffic_area_2(self, vehicle):
+        vehicle_location = vehicle.get_transform().location
+        vehicle_point = (vehicle_location.x, vehicle_location.y)
+        return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.traffic_area_2)
+
     def is_vehicle_in_weather_area_1(self, vehicle):
         vehicle_location = vehicle.get_transform().location
         vehicle_point = (vehicle_location.x, vehicle_location.y)
@@ -86,6 +93,22 @@ class Scenario_Runner():
         vehicle_point = (vehicle_location.x, vehicle_location.y)
         return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.pedestrian_area_1)
 
+    def check_traffic_light_1(self, vehicle, hud, controller, world_carla):
+        if (self.is_vehicle_in_traffic_area_1(vehicle)):
+            if (not self.is_pass_traffic_1):
+                self.is_pass_traffic_1 = True
+                hud.short_minus_score(1)
+                hud.notification("Cross the red traffic light => score - 1")
+                hud.crossRTL+=1
+
+    def check_traffic_light_2(self, vehicle, hud, controller, world_carla):
+         if (self.is_vehicle_in_traffic_area_2(vehicle)):
+            if (not self.is_pass_traffic_2):
+                self.is_pass_traffic_2 = True
+                hud.short_minus_score(1)
+                hud.notification("Cross the red traffic light => score - 1")
+                hud.crossRTL+=1
+
     def counting_stop_point(self, vehicle, hud):
         if (self.is_vehicle_in_stop_area_1(vehicle)):
             if (not self.is_in_stop):
@@ -107,7 +130,7 @@ class Scenario_Runner():
             self.was_in_limit_speed_start = False
             controller.create_car_1(world_carla)
             
-        if (self.was_in_limit_speed_start and hud.vehicle_speed > 40):
+        if (self.was_in_limit_speed_start and hud.vehicle_speed > 30):
             hud.is_minus = True
         else:
             hud.is_minus = False

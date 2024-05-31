@@ -776,17 +776,17 @@ class DualControl(object):
             # self._gear_R = int(self._parser.get('G29 Racing Wheel', 'gear_R'))
 
             self._steer_idx = 0
-            self._throttle_idx = 2
-            self._brake_idx = 3
-            self._reverse_idx = 5
-            self._handbrake_idx = 4
+            self._throttle_idx = 5
+            self._brake_idx = 4
+            self._reverse_idx = 2
+            self._handbrake_idx = 3
             
             self._gear_1 = 12
-            self._gear_2 = 13
+            self._gear_2 = 4
             self._gear_3 = 14
             self._gear_4 = 15
             self._gear_5 = 16
-            self._gear_R = 17
+            self._gear_R = 5
 
     def create_pedestrian(self, world, location, end_point):
         # Get the blueprint library
@@ -817,7 +817,7 @@ class DualControl(object):
         pedestrian.apply_control(pedestrian_control)
 
 
-        while (pedestrian.get_location().distance(end_point) > 20.0):
+        while (pedestrian.get_location().distance(end_point) > 18.0):
             time.sleep(1)
         pedestrian_control1 = carla.WalkerControl()
         pedestrian_control1.speed = 0
@@ -870,7 +870,7 @@ class DualControl(object):
 
     def control_car_1(self):
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
-        time.sleep(4.6)
+        time.sleep(4.8)
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=0.0, brake=1.0))
         time.sleep(4)
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
@@ -1042,14 +1042,14 @@ class DualControl(object):
 
         K2 = 1.6  # 1.6
         throttleCmd = K2 + (2.05 * math.log10(
-            -0.7 * jsInputs[self._throttle_idx] + 1.4) - 1.2) / 0.92
+            -0.7 * -1 *jsInputs[self._throttle_idx] + 1.4) - 1.2) / 0.92
         if throttleCmd <= 0:
             throttleCmd = 0
         elif throttleCmd > 1:
             throttleCmd = 1
 
         brakeCmd = 1.6 + (2.05 * math.log10(
-            -0.7 * jsInputs[self._brake_idx] + 1.4) - 1.2) / 0.92
+            -0.7 * -1 * jsInputs[self._brake_idx] + 1.4) - 1.2) / 0.92
         if brakeCmd <= 0:
             brakeCmd = 0
         elif brakeCmd > 1:

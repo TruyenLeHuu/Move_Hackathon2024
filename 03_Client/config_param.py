@@ -34,17 +34,24 @@ class RoundOneScenario():
             sign_prohibiting_straight_turn = 10
 
             self.traffic_area_1 = [
-                (19.5, 9.2),  # Point 1 (x, y)
-                (19.5, -9.2),  # Point 2 (x, y)
-                (40, -9.2),  # Point 3 (x, y)
-                (40, 9.2)   # Point 4 (x, y)
+                (-60, 75),  # Point 1 (x, y)
+                (-60, 99),  # Point 2 (x, y)
+                (-64, 99),  # Point 3 (x, y)
+                (-64, 75)   # Point 4 (x, y)
+            ]
+
+            self.traffic_area_2 = [
+                (16.3, 100),  # Point 1 (x, y)
+                (16.3, 80),  # Point 2 (x, y)
+                (22, 80),  # Point 3 (x, y)
+                (22, 100)   # Point 4 (x, y)
             ]
 
             self.weather_area_1 = [
                 (15, 82),  # Point 1 (x, y)
                 (15, 99),  # Point 2 (x, y)
-                (-60, 99),  # Point 3 (x, y)
-                (-60, 82)   # Point 4 (x, y)
+                (-37, 99),  # Point 3 (x, y)
+                (-37, 82)   # Point 4 (x, y)
             ]
 
             self.weather_area_2 = [
@@ -56,8 +63,8 @@ class RoundOneScenario():
 
             self.stop_area_1 = [
                 (-86, 90),  # Point 1 (x, y)
-                (-91.3, 90),  # Point 2 (x, y)
-                (-91.3, 97.7),  # Point 3 (x, y)
+                (-97, 90),  # Point 2 (x, y)
+                (-97, 97.7),  # Point 3 (x, y)
                 (-86, 97.7)   # Point 4 (x, y)
             ]
 
