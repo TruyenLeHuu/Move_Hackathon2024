@@ -61,8 +61,13 @@ class Actor(PseudoActor):
         :return: the ROS pose of this actor
         :rtype: geometry_msgs.msg.Pose
         """
-        return trans.carla_transform_to_ros_pose(
-            self.carla_actor.get_transform())
+        if (self.carla_actor.type_id == "traffic.traffic_light"):
+            transform = trans.carla_transform_to_ros_pose(self.carla_actor.get_transform())
+            transform.position.x =  self.carla_actor.get_transform().location.x
+            transform.position.y =  self.carla_actor.get_transform().location.y
+            return transform
+        else: 
+            return trans.carla_transform_to_ros_pose(self.carla_actor.get_transform())
 
     def get_current_ros_transform(self):
         """
