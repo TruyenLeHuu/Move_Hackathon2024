@@ -34,7 +34,7 @@ class Vehicle_Control():
         ap = random.choice(blueprint_library.filter('vehicle.dodge.charger_2020'))
 
         ap.set_attribute('role_name', "hero")
-        new_location = carla.Location(x=-131.5, y=17.4, z=0.5)
+        new_location = carla.Location(x=-246.8, y=-35.2, z=12)
         new_transform = carla.Transform(new_location, carla.Rotation(yaw=90))
         
         # blueprint = random.choice(self.get_actor_blueprints(world, 'vehicle.*', "2"))
@@ -90,7 +90,6 @@ class Vehicle_Control():
         print(self.vehicle.get_physics_control().wheels[2].position.x)
         print(self.vehicle.get_physics_control().wheels[2].position.y)
         print("wheelbase", wheelbase)
-        self.open_random_door()
 
     def destroy(self):
         """

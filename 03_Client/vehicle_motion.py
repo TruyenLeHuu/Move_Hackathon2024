@@ -198,6 +198,9 @@ class HUD(object):
         self.score = 100
         self.ros = _ros
         self.vehicle_speed = 0
+        self.is_apccept_invasion = 1
+        self.is_apccept_collision = 1
+        self.manual_override = False
         self.dim = (width, height)
         font = pygame.font.Font(pygame.font.get_default_font(), 20)
         font_name = 'courier' if os.name == 'nt' else 'mono'
@@ -214,7 +217,7 @@ class HUD(object):
         self._show_info = True
         self._info_text = []
         self._server_clock = pygame.time.Clock()
-        self.is_start = 0
+        self.is_start = 2
         self.time_start = 0
         self.time_end = 0
 
@@ -276,7 +279,7 @@ class HUD(object):
                 ('Brake:', c.brake, 0.0, 1.0),
                 ('Reverse:', c.reverse),
                 ('Hand brake:', c.hand_brake),
-                ('Manual:', c.manual_gear_shift),
+                ('M override:', self.manual_override),
                 'Gear:        %s' % {-1: 'R', 0: 'N'}.get(c.gear, c.gear)]
         elif isinstance(c, carla.WalkerControl):
             self._info_text += [
@@ -345,16 +348,20 @@ class HUD(object):
             self.short_time_distance = time.time()
             
     def short_minus_score_invasion(self, score_minus):
-        if (time.time() - self.short_time_distance >= 0.5):
-            self.invasion = self.invasion + 1
-            self.score = self.score - score_minus
-            self.short_time_distance = time.time()
+        if (not self.is_apccept_invasion):
+            if (time.time() - self.short_time_distance >= 0.5):
+                self.invasion = self.invasion + 1
+                self.score = self.score - score_minus
+                self.short_time_distance = time.time()
+                self.notification('Crossed line => score - 1', seconds = 1)
 
-    def short_minus_score_collision(self, score_minus):
-        if (time.time() - self.short_time_distance >= 0.5):
-            self.collision+=1
-            self.score = self.score - score_minus
-            self.short_time_distance = time.time()
+    def short_minus_score_collision(self, score_minus, actor_type):
+        if (not self.is_apccept_collision ):
+            if (time.time() - self.short_time_distance >= 0.5):
+                self.collision+=1
+                self.score = self.score - score_minus
+                self.short_time_distance = time.time()
+                self.notification('Collision with %r => score - 1' % actor_type)
         
     def long_minus_score(self, score_minus):
         if (time.time() - self.long_time_distance > 1):
@@ -505,10 +512,9 @@ class CollisionSensor(object):
         impulse = event.normal_impulse
         intensity = math.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
         # print(intensity)
-        if (intensity > 500):
+        if (intensity > 400):
         # self.hud.score = self.hud.score - 1
-            self.hud.short_minus_score_collision(1)
-            self.hud.notification('Collision with %r => score - 1' % actor_type)
+            self.hud.short_minus_score_collision(1, actor_type)
         self.history.append((event.frame, intensity))
         if len(self.history) > 4000:
             self.history.pop(0)
@@ -540,7 +546,7 @@ class LaneInvasionSensor(object):
         lane_types = set(x.type for x in event.crossed_lane_markings)
         text = ['%r' % str(x).split()[-1] for x in lane_types]
         self.hud.short_minus_score_invasion(1)
-        self.hud.notification('Crossed line => score - 1', seconds = 1)
+        
         
 
 # ==============================================================================
@@ -748,8 +754,9 @@ class CameraManager(object):
 
 
 class DualControl(object):
-    def __init__(self, parent):
+    def __init__(self, parent, _hud):
         # start_in_autopilot
+        self.hud = _hud
         self._parent = parent
         self._steer_cache = 0.0
         self._control = carla.VehicleControl()
@@ -928,7 +935,9 @@ class DualControl(object):
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
         time.sleep(4.3)
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=0.0, brake=1.0))
-        time.sleep(4)
+        while (self.vehicle_1.get_location().distance(self._parent.vehicle_controller.vehicle.get_transform().location) > 10):
+            time.sleep(3)
+        # time.sleep(4)
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
         time.sleep(10)
         self.vehicle_1.destroy()
@@ -1027,10 +1036,19 @@ class DualControl(object):
                     # vehicle.set_autopilot(True)
                     # vehicle.enable_constant_velocity(carla.Vector3D(2, 0, 0))
                     self.create_car_1(world_carla)
+                elif event.key == K_SPACE:
+                    self.hud.is_start = 0
+                    self.hud.is_apccept_collision = 0
+                    self.hud.is_apccept_invasion = 0
+                    new_location = carla.Location(x=-131.5, y=17.4, z=0.1)
+                    new_transform = carla.Transform(new_location, carla.Rotation(yaw=90))
+                    self._parent.vehicle_controller.vehicle.set_transform(new_transform)
+                    self._parent.vehicle_controller.open_random_door()
                 elif event.key == K_o:
                     # self._parent.is_parking = 1 if self._parent.is_parking == 0 else 0
                     # self._parent.state = 0 if self._parent.state == -1 else -1
                     self.create_pedestria_1(world_carla)
+
                 elif event.key == K_r:
                     self._parent.release_control = 1
                 elif event.key == K_t:

@@ -92,6 +92,10 @@ class RoundOneScenario():
             self.parking_first_point = 0.0
             self.vehicle_init_position  = [
                 carla.Transform(carla.Location(x=-265, y=-10, z=0.05), carla.Rotation(yaw=270))]
+            
+            self.traffic_light_transform  = [
+                carla.Transform(carla.Location(x=-61.1, y=100, z=0.05), carla.Rotation(yaw=270)),
+                carla.Transform(carla.Location(x=18.15, y=100, z=0.05), carla.Rotation(yaw=270)),]
             #   Stop = 1
             #   Speed Limited 40 = 2
             #   Speed Limited 60 = 3

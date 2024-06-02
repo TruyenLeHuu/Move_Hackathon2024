@@ -94,20 +94,20 @@ class Scenario_Runner():
         vehicle_point = (vehicle_location.x, vehicle_location.y)
         return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.pedestrian_area_1)
 
-    def check_traffic_light_1(self, vehicle, hud, controller, world_carla):
+    def check_traffic_light_1(self, vehicle, hud, ros):
         if (self.is_vehicle_in_traffic_area_1(vehicle)):
-            if (not self.is_pass_traffic_1):
+            if (not self.is_pass_traffic_1 and ros.status_light_1.state == 0):
                 self.is_pass_traffic_1 = True
-                hud.short_minus_score(1)
-                hud.notification("Cross the red traffic light => score - 1")
+                hud.long_minus_score(1)
+                hud.notification("Cross the red traffic light (score - 1)")
                 hud.crossRTL+=1
 
-    def check_traffic_light_2(self, vehicle, hud, controller, world_carla):
-         if (self.is_vehicle_in_traffic_area_2(vehicle)):
+    def check_traffic_light_2(self, vehicle, hud, ros):
+         if (self.is_vehicle_in_traffic_area_2(vehicle) and ros.status_light_2.state == 0):
             if (not self.is_pass_traffic_2):
                 self.is_pass_traffic_2 = True
-                hud.short_minus_score(1)
-                hud.notification("Cross the red traffic light => score - 1")
+                hud.long_minus_score(1)
+                hud.notification("Cross the red traffic light (score - 1)")
                 hud.crossRTL+=1
 
     def counting_stop_point(self, vehicle, hud):
@@ -126,9 +126,11 @@ class Scenario_Runner():
     def check_speed_limited_1(self, vehicle, hud, controller, world_carla):
         if (self.is_vehicle_in_limit_speed_start(vehicle) and not self.was_in_limit_speed_start):
             self.was_in_limit_speed_start = True
+            hud.is_apccept_invasion = True
 
         if (self.is_vehicle_in_limit_speed_stop(vehicle) and self.was_in_limit_speed_start):
             self.was_in_limit_speed_start = False
+            hud.is_apccept_invasion = False
             controller.create_car_1(world_carla)
             
         if (self.was_in_limit_speed_start and hud.vehicle_speed > 30):
