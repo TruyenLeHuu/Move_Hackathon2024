@@ -194,6 +194,7 @@ class HUD(object):
         self.short_time_distance = 0
         self.long_time_distance = 0
         self.is_minus = 0
+        self.is_minus_1 = 0
         self.score = 100
         self.ros = _ros
         self.vehicle_speed = 0
@@ -243,10 +244,10 @@ class HUD(object):
         heading += 'E' if 179.5 > t.rotation.yaw > 0.5 else ''
         heading += 'W' if -0.5 > t.rotation.yaw > -179.5 else ''
         colhist = world.collision_sensor.get_collision_history()
-        if ( (3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2)) > 1 and self.is_start != 2):
+        if ( (3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2)) > 6 and self.is_start != 2):
             self.is_start = 1
-            if (( (3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2)) > 60)):
-                self.is_start = 2
+            # if (( (3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2)) > 60)):
+            #     self.is_start = 2
         collision = [colhist[x + self.frame - 200] for x in range(0, 200)]
         max_col = max(1.0, max(collision))
         collision = [x / max_col for x in collision]
@@ -342,6 +343,18 @@ class HUD(object):
         if (time.time() - self.short_time_distance >= 0.5):
             self.score = self.score - score_minus
             self.short_time_distance = time.time()
+            
+    def short_minus_score_invasion(self, score_minus):
+        if (time.time() - self.short_time_distance >= 0.5):
+            self.invasion = self.invasion + 1
+            self.score = self.score - score_minus
+            self.short_time_distance = time.time()
+
+    def short_minus_score_collision(self, score_minus):
+        if (time.time() - self.short_time_distance >= 0.5):
+            self.collision+=1
+            self.score = self.score - score_minus
+            self.short_time_distance = time.time()
         
     def long_minus_score(self, score_minus):
         if (time.time() - self.long_time_distance > 1):
@@ -349,7 +362,7 @@ class HUD(object):
             self.long_time_distance = time.time()
 
     def long_minus_score_with_condition(self, score_minus):
-        if (self.is_minus):
+        if (self.is_minus or self.is_minus_1):
             if (time.time() - self.long_time_distance > 1):
                 self.exceedSpeed = self.exceedSpeed + 1
                 self.score = self.score - score_minus
@@ -494,8 +507,7 @@ class CollisionSensor(object):
         # print(intensity)
         if (intensity > 500):
         # self.hud.score = self.hud.score - 1
-            self.hud.short_minus_score(1)
-            self.hud.collision+=1
+            self.hud.short_minus_score_collision(1)
             self.hud.notification('Collision with %r => score - 1' % actor_type)
         self.history.append((event.frame, intensity))
         if len(self.history) > 4000:
@@ -525,10 +537,9 @@ class LaneInvasionSensor(object):
         self = weak_self()
         if not self:
             return
-        self.hud.invasion = self.hud.invasion + 1
         lane_types = set(x.type for x in event.crossed_lane_markings)
         text = ['%r' % str(x).split()[-1] for x in lane_types]
-        self.hud.short_minus_score(1)
+        self.hud.short_minus_score_invasion(1)
         self.hud.notification('Crossed line => score - 1', seconds = 1)
         
 
@@ -804,6 +815,31 @@ class DualControl(object):
         # Move the pedestrian along the defined path
         thread = threading.Thread(target=self.move_pedestrian_along_path, args=(pedestrian, location, end_point))
 
+        thread1 = threading.Thread(target=self.create_pedestrian_1, args=(world, location, end_point))
+
+        # Start the thread
+        thread.start()
+
+        thread1.start()
+    
+    def create_pedestrian_1(self, world, location, end_point):
+
+        time.sleep(2)
+        # Get the blueprint library
+        blueprint_library = world.get_blueprint_library()
+
+        # Choose a random pedestrian model from the blueprint library
+        pedestrian_bp = random.choice(blueprint_library.filter('walker.pedestrian.*'))
+
+        # Set the spawn location and rotation
+        transform = carla.Transform(location, carla.Rotation(yaw=0))
+
+        # Spawn the pedestrian
+        pedestrian = world.spawn_actor(pedestrian_bp, transform)
+
+        # Move the pedestrian along the defined path
+        thread = threading.Thread(target=self.move_pedestrian_along_path_1, args=(pedestrian, location, end_point))
+
         # Start the thread
         thread.start()
         
@@ -817,7 +853,30 @@ class DualControl(object):
         pedestrian.apply_control(pedestrian_control)
 
 
-        while (pedestrian.get_location().distance(end_point) > 18.0):
+        while (pedestrian.get_location().distance(end_point) > 16.0):
+            time.sleep(1)
+        pedestrian_control1 = carla.WalkerControl()
+        pedestrian_control1.speed = 0
+        pedestrian.apply_control(pedestrian_control1)
+
+        while (pedestrian.get_location().distance(self._parent.vehicle_controller.vehicle.get_transform().location) > 15):
+            time.sleep(1)
+        time.sleep(8)
+        pedestrian.apply_control(pedestrian_control)
+        time.sleep(15)
+        pedestrian.destroy()
+
+    def move_pedestrian_along_path_1(self, pedestrian, start_point, end_point):
+        # Move the pedestrian along the predefined path
+        # print(pygame.time.Clock().tick())
+        pedestrian.set_simulate_physics(True)
+        pedestrian_control = carla.WalkerControl()
+        pedestrian_control.speed = 1.4
+        pedestrian_control.direction = (end_point - start_point).make_unit_vector()
+        pedestrian.apply_control(pedestrian_control)
+
+
+        while (pedestrian.get_location().distance(end_point) > 19.0):
             time.sleep(1)
         pedestrian_control1 = carla.WalkerControl()
         pedestrian_control1.speed = 0
@@ -832,8 +891,8 @@ class DualControl(object):
 
     def create_pedestria_1(self, world):
         # Define the start and end points of the crosswalk
-        start_point = carla.Location(x=42, y=-11, z=1)  # Adjust the coordinates as needed
-        end_point = carla.Location(x=42, y=13, z=0.5)  # Adjust the coordinates as needed
+        start_point = carla.Location(x=43, y=-11, z=1)  # Adjust the coordinates as needed
+        end_point = carla.Location(x=43, y=13, z=0.5)  # Adjust the coordinates as needed
 
         # Create a path for the pedestrian
         path = [start_point, carla.Location(start_point.x, end_point.y, end_point.z), end_point]
@@ -843,10 +902,7 @@ class DualControl(object):
 
     def create_car_1(self, world):
         # Define the start and end points of the crosswalk
-        start_point = carla.Location(x=66.5, y=5.1, z=1)  # Adjust the coordinates as needed
-        end_point = carla.Location(x=42, y=13, z=0.5)  # Adjust the coordinates as needed
-
-        # blueprint = random.choice(world.get_blueprint_library().filter('vehicle.dodge.charger_2020'))
+        start_point = carla.Location(x=75.5, y=9.8, z=1)  # Adjust the coordinates as needed
 
         blueprint = random.choice(world.get_blueprint_library().filter("vehicle.ford.ambulance"))
         if blueprint.has_attribute("driver_id"):
@@ -859,7 +915,7 @@ class DualControl(object):
         except IndexError:
             pass
         vehicle_init_position  = [
-            carla.Transform(start_point, carla.Rotation(yaw=-2))]
+            carla.Transform(start_point, carla.Rotation(yaw=-5))]
 
         self.vehicle_1 = world.spawn_actor(blueprint, vehicle_init_position[0])
 
@@ -870,7 +926,7 @@ class DualControl(object):
 
     def control_car_1(self):
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
-        time.sleep(4.8)
+        time.sleep(4.3)
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=0.0, brake=1.0))
         time.sleep(4)
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))

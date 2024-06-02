@@ -77,9 +77,11 @@ class CarlaClient():
                 self.ros_connection.publish_traffic_sign_info()
                 self.scenario_runner.counting_stop_point(self.vehicle_controller.vehicle, hud)
                 self.scenario_runner.check_speed_limited_1(self.vehicle_controller.vehicle, hud, controller, world_carla)
+                self.scenario_runner.check_speed_limited_2(self.vehicle_controller.vehicle, hud)
                 self.scenario_runner.check_pedestrian_1(self.vehicle_controller.vehicle, controller, world_carla)
                 self.scenario_runner.check_traffic_light_1(self.vehicle_controller.vehicle, hud, controller, world_carla)
                 self.scenario_runner.check_traffic_light_2(self.vehicle_controller.vehicle, hud, controller, world_carla)
+    
                 hud.long_minus_score_with_condition(1)
                 # self.ros_connection.keep_topic_alive()
                 if (self.scenario_runner.is_vehicle_in_weather_area_1(self.vehicle_controller.vehicle)):
