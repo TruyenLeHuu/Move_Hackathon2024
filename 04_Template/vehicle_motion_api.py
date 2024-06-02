@@ -79,8 +79,6 @@ class General():
         print("Initing...")
         while (self.traffic_lights_status == None or self.traffic_sign_info == None ):
             time.sleep(0.5)
-
-        
         
     """===========================================================================================================================================
         Begin VMP API
