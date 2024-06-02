@@ -24,6 +24,7 @@ class Scenario_Runner():
         self.is_cross_stop = False
         self.is_successful_stop = False
         self.was_in_limit_speed_start = False
+        self.was_in_limit_speed = False
         self.was_create_pedestrian = False
         self.is_pass_traffic_1 = False
         self.is_pass_traffic_2 = False
@@ -134,6 +135,20 @@ class Scenario_Runner():
             hud.is_minus = True
         else:
             hud.is_minus = False
+
+    def check_speed_limited_2(self, vehicle, hud):
+        if (self.is_vehicle_in_weather_area_1(vehicle) and not self.was_in_limit_speed):
+            self.was_in_limit_speed = True
+            hud.notification("Please turn on light and keep speed limited!")
+
+        if (not self.is_vehicle_in_weather_area_1(vehicle) and self.was_in_limit_speed):
+            self.was_in_limit_speed = False
+            
+        if (self.was_in_limit_speed and hud.vehicle_speed > 30):
+            hud.is_minus_1 = True
+        else:
+            hud.is_minus_1 = False
+
 
     def check_pedestrian_1(self, vehicle, controller, world_carla):
         if(self.is_vehicle_in_limit_pedestrian_area_1(vehicle) and not self.was_create_pedestrian):

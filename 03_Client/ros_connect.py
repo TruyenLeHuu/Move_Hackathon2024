@@ -141,8 +141,12 @@ class RosConnect():
             for traffic_status in message.traffic_lights:
                 traffic_light = CarlaTrafficLight()
                 traffic_light.id = traffic_status.id
+                if (traffic_light.id == 93):
+                    print(traffic_status.state)
+                    print(self.traffic_light_info.traffic_lights[index].transform)
                 traffic_light.state = traffic_status.state
                 traffic_light.transform = self.traffic_light_info.traffic_lights[index].transform
+                
                 index = index + 1
                 self.traffic_light_list.traffic_lights.append(traffic_light)
                 # print(index)
