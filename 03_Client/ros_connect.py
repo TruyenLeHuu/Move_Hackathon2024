@@ -46,6 +46,7 @@ class RosConnect():
         rospy.Subscriber('/carla/dev_trigger', String, self.dev_trigger)
         rospy.Subscriber('/carla/hero/vehicle_control_light', String, self.control_light)
         rospy.Subscriber('/carla/hero/vehicle_control_haz_light', String, self.control_haz_light)
+        rospy.Subscriber('/carla/hero/vehicle_control_brake_light', String, self.control_brake_light)
         rospy.Subscriber('/carla/hero/vehicle_toggle_FR_door', Int32, self.toggle_FR_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_FL_door', Int32, self.toggle_FL_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_RR_door', Int32, self.toggle_RR_door)
@@ -206,6 +207,15 @@ class RosConnect():
                 self.vehicle_controller.set_light_blink()
             else:
                 self.vehicle_controller.set_light_unblink()
+        except Exception as e:
+            print("Error:", str(e))
+    
+    def control_brake_light(self, message):
+        try:
+            if message.data == "on" or message.data == "ON" or message.data == "On" or message.data == "oN":
+                self.vehicle_controller.set_light_brake_on()
+            else:
+                self.vehicle_controller.set_light_brake_off()
         except Exception as e:
             print("Error:", str(e))
 
