@@ -28,6 +28,8 @@ class Scenario_Runner():
         self.was_create_pedestrian = False
         self.is_pass_traffic_1 = False
         self.is_pass_traffic_2 = False
+        self.is_in_goal = False
+        self.is_in_free = False
 
     # def order_points_counterclockwise(self, points):
     #     # Calculate the centroid of the polygon
@@ -93,15 +95,41 @@ class Scenario_Runner():
         vehicle_location = vehicle.get_transform().location
         vehicle_point = (vehicle_location.x, vehicle_location.y)
         return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.pedestrian_area_1)
+    
+    def is_vehicle_in_goal_area(self, vehicle):
+        vehicle_location = vehicle.get_transform().location
+        vehicle_point = (vehicle_location.x, vehicle_location.y)
+        return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.goal_area)
+    
+    def is_vehicle_in_free_area(self, vehicle):
+            vehicle_location = vehicle.get_transform().location
+            vehicle_point = (vehicle_location.x, vehicle_location.y)
+            return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.free_area)
+    
+    def check_free_area(self, vehicle, hud):
+        if (self.is_vehicle_in_free_area(vehicle)):
+            if (not self.is_in_free):
+                self.is_in_free = True
+                hud.is_apccept_invasion = True
+                hud.notification("Now, free all rule, you can run as fast as possible!")
 
+    def check_goal_area(self, vehicle, hud):
+        if (self.is_vehicle_in_goal_area(vehicle)):
+            if (not self.is_in_goal):
+                self.is_in_goal = True
+                hud.is_apccept_invasion = True
+                hud.is_apccept_collision = True
+                hud.is_start = 2
+                hud.notification("Congratulation! Your team are finish the rate!")
+                
 
     def check_traffic_light_1(self, vehicle, hud, ros):
-        if (self.is_vehicle_in_traffic_area_1(vehicle)):
-            if (not self.is_pass_traffic_1 and ros.status_light_1.state == 0):
+        if (self.is_vehicle_in_traffic_area_1(vehicle) and ros.status_light_1.state == 0):
+            if (not self.is_pass_traffic_1):
                 self.is_pass_traffic_1 = True
-                hud.long_minus_score(1)
                 hud.notification("Cross the red traffic light (score - 1)")
-                hud.crossRTL+=1
+                hud.long_minus_score(1)
+                
 
     def check_traffic_light_2(self, vehicle, hud, ros):
          if (self.is_vehicle_in_traffic_area_2(vehicle) and ros.status_light_2.state == 0):
@@ -109,7 +137,6 @@ class Scenario_Runner():
                 self.is_pass_traffic_2 = True
                 hud.long_minus_score(1)
                 hud.notification("Cross the red traffic light (score - 1)")
-                hud.crossRTL+=1
 
     def counting_stop_point(self, vehicle, hud):
         if (self.is_vehicle_in_stop_area_1(vehicle)):
@@ -147,7 +174,7 @@ class Scenario_Runner():
         if (not self.is_vehicle_in_weather_area_1(vehicle) and self.was_in_limit_speed):
             self.was_in_limit_speed = False
             
-        if (self.was_in_limit_speed and hud.vehicle_speed > 30):
+        if (self.was_in_limit_speed and hud.vehicle_speed > 50):
             hud.is_minus_1 = True
         else:
             hud.is_minus_1 = False

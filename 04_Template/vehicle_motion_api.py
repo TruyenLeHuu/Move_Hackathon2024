@@ -60,6 +60,7 @@ class General():
         # Create a publisher for the vehicle control command
         self.control_pub = rospy.Publisher('/carla/hero/vehicle_control_cmd', CarlaEgoVehicleControl, queue_size=10)
         self.light_control = rospy.Publisher('/carla/hero/vehicle_control_light', String, queue_size=10)
+        self.haz_light_control = rospy.Publisher('/carla/hero/vehicle_control_haz_light', String, queue_size=10)
         self.door_FL_control = rospy.Publisher('/carla/hero/vehicle_toggle_FL_door', Int32, queue_size=10)
         self.door_FR_control = rospy.Publisher('/carla/hero/vehicle_toggle_FR_door', Int32, queue_size=10)
         self.door_RL_control = rospy.Publisher('/carla/hero/vehicle_toggle_RL_door', Int32, queue_size=10)
@@ -150,6 +151,12 @@ class General():
     """
     def vehicle_control_light(self, control):
         self.light_control.publish(control)
+
+    """ Input control: "On"/"Off" 
+        On will blink the haz light 
+    """
+    def vehicle_control_haz_light(self, control):
+        self.haz_light_control.publish(control)
 
     """ Velocity value return:
         1.2 (km/h)

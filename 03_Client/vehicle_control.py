@@ -213,6 +213,16 @@ class Vehicle_Control():
         # self.lights &= ~carla.VehicleLightState.RightBlinker
         self.vehicle.set_light_state(carla.VehicleLightState.NONE)
 
+    def set_light_blink(self):
+        self.lights |= carla.VehicleLightState.LeftBlinker
+        self.lights |= carla.VehicleLightState.RightBlinker
+        self.vehicle.set_light_state(carla.VehicleLightState(self.lights))
+
+    def set_light_unblink(self):
+        self.lights &= ~carla.VehicleLightState.LeftBlinker
+        self.lights &= ~carla.VehicleLightState.RightBlinker
+        self.vehicle.set_light_state(carla.VehicleLightState(self.lights))
+
     def vehicle_control_with_latency_and_error(self, control_throttle, control_steer, control_brake, vehicle_reverse = False, vehicle_handbrake = False, vehicle_mg_shift = False, vehicle_gear = 0):
         if self.noises_enable == 1:
             if abs(control_throttle) > 0.1:
