@@ -177,6 +177,7 @@ class IMUSensor(object):
         self.compass = math.degrees(sensor_data.compass)
 class HUD(object):
     def __init__(self, width, height, _ros):
+        self.team_name = "Null"
         self.invasion = 0
         self.collision = 0
         self.crossRTL = 0
@@ -208,7 +209,7 @@ class HUD(object):
         default_font = 'ubuntumono'
         mono = default_font if default_font in fonts else fonts[0]
         mono = pygame.font.match_font(mono)
-        self._font_mono = pygame.font.Font(mono, 12 if os.name == 'nt' else 14)
+        self._font_mono = pygame.font.Font(mono, 14 if os.name == 'nt' else 16)
         self._notifications = FadingText(font, (width, 40), (0, height - 100))
         # self.help = HelpText(pygame.font.Font(mono, 24), width, height)
         self.server_fps = 0
@@ -262,6 +263,7 @@ class HUD(object):
         self._info_text = [
             'Server:  % 16.0f FPS' % self.server_fps,
             '',
+            'Team: % 20s' % self.team_name,
             'Vehicle: % 20s' % get_actor_display_name(player, truncate=20),
             'Map:     % 20s' % world.world.get_map().name.split('/')[-1],
             'Run time: % 18s' % datetime.timedelta(seconds=int(self.simulation_time)),
@@ -385,7 +387,7 @@ class HUD(object):
 
     def render(self, display):
         if self._show_info:
-            info_surface = pygame.Surface((220, self.dim[1]))
+            info_surface = pygame.Surface((260, self.dim[1]))
             info_surface.set_alpha(100)
             display.blit(info_surface, (0, 0))
             v_offset = 4
@@ -911,7 +913,7 @@ class DualControl(object):
 
     def create_car_1(self, world):
         # Define the start and end points of the crosswalk
-        start_point = carla.Location(x=75.5, y=9.8, z=1)  # Adjust the coordinates as needed
+        start_point = carla.Location(x=84.5, y=9.3, z=1)  # Adjust the coordinates as needed
 
         blueprint = random.choice(world.get_blueprint_library().filter("vehicle.ford.ambulance"))
         if blueprint.has_attribute("driver_id"):
@@ -924,7 +926,7 @@ class DualControl(object):
         except IndexError:
             pass
         vehicle_init_position  = [
-            carla.Transform(start_point, carla.Rotation(yaw=-5))]
+            carla.Transform(start_point, carla.Rotation(yaw=-7))]
 
         self.vehicle_1 = world.spawn_actor(blueprint, vehicle_init_position[0])
 
@@ -935,8 +937,9 @@ class DualControl(object):
 
     def control_car_1(self):
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
-        time.sleep(4.3)
+        time.sleep(3.8)
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=0.0, brake=1.0))
+        time.sleep(3)
         while (self.vehicle_1.get_location().distance(self._parent.vehicle_controller.vehicle.get_transform().location) > 10):
             time.sleep(3)
         # time.sleep(4)

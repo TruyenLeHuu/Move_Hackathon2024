@@ -213,6 +213,16 @@ class Vehicle_Control():
         # self.lights &= ~carla.VehicleLightState.RightBlinker
         self.vehicle.set_light_state(carla.VehicleLightState.NONE)
 
+    def set_light_brake_on(self):
+        self.lights |= carla.VehicleLightState.Brake
+        # self.lights |= carla.VehicleLightState.RightBlinker
+        self.vehicle.set_light_state(carla.VehicleLightState(self.lights))
+
+    def set_light_brake_off(self):
+        self.lights &= ~carla.VehicleLightState.Brake
+        # self.lights &= ~carla.VehicleLightState.RightBlinker
+        self.vehicle.set_light_state(carla.VehicleLightState(self.lights))
+
     def set_light_blink(self):
         self.lights |= carla.VehicleLightState.LeftBlinker
         self.lights |= carla.VehicleLightState.RightBlinker

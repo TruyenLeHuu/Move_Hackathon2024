@@ -61,11 +61,13 @@ class General():
         self.control_pub = rospy.Publisher('/carla/hero/vehicle_control_cmd', CarlaEgoVehicleControl, queue_size=10)
         self.light_control = rospy.Publisher('/carla/hero/vehicle_control_light', String, queue_size=10)
         self.haz_light_control = rospy.Publisher('/carla/hero/vehicle_control_haz_light', String, queue_size=10)
+        self.brake_light_control = rospy.Publisher('/carla/hero/vehicle_control_brake_light', String, queue_size=10)
         self.door_FL_control = rospy.Publisher('/carla/hero/vehicle_toggle_FL_door', Int32, queue_size=10)
         self.door_FR_control = rospy.Publisher('/carla/hero/vehicle_toggle_FR_door', Int32, queue_size=10)
         self.door_RL_control = rospy.Publisher('/carla/hero/vehicle_toggle_RL_door', Int32, queue_size=10)
         self.door_RR_control = rospy.Publisher('/carla/hero/vehicle_toggle_RR_door', Int32, queue_size=10)
         self.dev_trigger = rospy.Publisher('/carla/dev_trigger', String, queue_size=10)
+        self.set_team_name = rospy.Publisher('/carla/hero/set_team_name', String, queue_size=10)
 
         rospy.init_node('dev_node', anonymous=True)
 
@@ -157,6 +159,17 @@ class General():
     """
     def vehicle_control_haz_light(self, control):
         self.haz_light_control.publish(control)
+
+    """ Input control: "On"/"Off" 
+        On will blink the brake light 
+    """
+    def vehicle_control_brake_light(self, control):
+        self.brake_light_control.publish(control)
+
+    """ Input: team name
+    """
+    def vehicle_set_team_name(self, name):
+        self.set_team_name.publish(name)
 
     """ Velocity value return:
         1.2 (km/h)
