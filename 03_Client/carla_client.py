@@ -65,8 +65,9 @@ class CarlaClient():
             pygame.HWSURFACE | pygame.DOUBLEBUF)
             self.vehicle_controller.create_car(world_carla)
             hud = HUD(1500, 800, self.ros_connection)
+            self.ros_connection.take_hud(hud)
             world = World(world_carla, hud, 'vehicle.*', self.vehicle_controller.vehicle, self.ros_connection)
-            controller = DualControl(self)
+            controller = DualControl(self, hud)
             clock = pygame.time.Clock()
             self.is_traffic_1 = False
             while True:
@@ -74,7 +75,14 @@ class CarlaClient():
                 self.ros_connection.publish_status()
                 self.ros_connection.publish_obstacle_distance()
                 self.ros_connection.publish_traffic_sign_info()
-                self.scenario_runner.counting_stop_point(self.vehicle_controller.vehicle)
+                self.scenario_runner.counting_stop_point(self.vehicle_controller.vehicle, hud)
+                self.scenario_runner.check_speed_limited_1(self.vehicle_controller.vehicle, hud, controller, world_carla)
+                self.scenario_runner.check_speed_limited_2(self.vehicle_controller.vehicle, hud)
+                self.scenario_runner.check_pedestrian_1(self.vehicle_controller.vehicle, controller, world_carla)
+                self.scenario_runner.check_traffic_light_1(self.vehicle_controller.vehicle, hud, self.ros_connection)
+                self.scenario_runner.check_traffic_light_2(self.vehicle_controller.vehicle, hud, self.ros_connection)
+    
+                hud.long_minus_score_with_condition(1)
                 # self.ros_connection.keep_topic_alive()
                 if (self.scenario_runner.is_vehicle_in_weather_area_1(self.vehicle_controller.vehicle)):
                     # if (world_carla.get_weather() != carla.WeatherParameters.ClearNight):
@@ -91,17 +99,6 @@ class CarlaClient():
                 # self.vehicle_controller.vehicle_control_with_latency_and_error(self._throttle, self._steer, self._brake, self._reverse, self._hand_brake, self.manual_gear_shift, self.gear)
                 if (not self.release_control):
                     self.ros_connection.vehicle_control_with_ros(self._throttle, self._steer, self._brake, self._reverse, self._hand_brake, self.manual_gear_shift, self.gear)
-                if (self.is_traffic_1 == False and self.scenario_runner.is_vehicle_in_traffic_area_1(self.vehicle_controller.vehicle) and self.ros_connection.tfl_134_status == 0):
-                    hud.notification("Cross the red traffic light => score - 1")
-                    hud.minus_score(1)
-                    hud.crossRTL+=1
-                    self.is_traffic_1 = True
-                elif (self.is_traffic_1 == False and self.scenario_runner.is_vehicle_in_traffic_area_1(self.vehicle_controller.vehicle) and self.ros_connection.tfl_134_status == 1):
-                    hud.notification("Cross the yellow traffic light")
-                    self.is_traffic_1 = True
-                elif (self.is_traffic_1 == False and self.scenario_runner.is_vehicle_in_traffic_area_1(self.vehicle_controller.vehicle) and self.ros_connection.tfl_134_status == 2):
-                    hud.notification("Cross the green traffic light")
-                    self.is_traffic_1 = True
                 """ This place end for application code """
 
                 world.tick(clock)

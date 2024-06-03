@@ -180,6 +180,8 @@ class HUD(object):
         self.invasion = 0
         self.collision = 0
         self.crossRTL = 0
+        self.crossStop = 0
+        self.exceedSpeed = 0
 
         self.detectedTSDSpeed = 0
         self.detectedTSDStop = 0
@@ -189,8 +191,16 @@ class HUD(object):
         self.detectedCar = 0
         self.detectedWeather = 0
         self.detectedDoor = 0
+        self.short_time_distance = 0
+        self.long_time_distance = 0
+        self.is_minus = 0
+        self.is_minus_1 = 0
         self.score = 100
         self.ros = _ros
+        self.vehicle_speed = 0
+        self.is_apccept_invasion = 1
+        self.is_apccept_collision = 1
+        self.manual_override = False
         self.dim = (width, height)
         font = pygame.font.Font(pygame.font.get_default_font(), 20)
         font_name = 'courier' if os.name == 'nt' else 'mono'
@@ -207,7 +217,7 @@ class HUD(object):
         self._show_info = True
         self._info_text = []
         self._server_clock = pygame.time.Clock()
-        self.is_start = 0
+        self.is_start = 2
         self.time_start = 0
         self.time_end = 0
 
@@ -237,15 +247,16 @@ class HUD(object):
         heading += 'E' if 179.5 > t.rotation.yaw > 0.5 else ''
         heading += 'W' if -0.5 > t.rotation.yaw > -179.5 else ''
         colhist = world.collision_sensor.get_collision_history()
-        if ( (3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2)) > 1 and self.is_start != 2):
+        if ( (3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2)) > 6 and self.is_start != 2):
             self.is_start = 1
-            if (( (3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2)) > 60)):
-                self.is_start = 2
+            # if (( (3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2)) > 60)):
+            #     self.is_start = 2
         collision = [colhist[x + self.frame - 200] for x in range(0, 200)]
         max_col = max(1.0, max(collision))
         collision = [x / max_col for x in collision]
         vehicles = world.world.get_actors().filter('static.*')
-        self.ros.publish_speed(int(round(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2), 0)))
+        self.vehicle_speed = int(round(3.6 * math.sqrt(v.x**2 + v.y**2 + v.z**2), 0))
+        self.ros.publish_speed(self.vehicle_speed)
         self.ros.publish_brake(round(c.brake*110, 2))
         self.ros.publish_steer(int(round(c.steer*540,0)))
         self._info_text = [
@@ -268,7 +279,7 @@ class HUD(object):
                 ('Brake:', c.brake, 0.0, 1.0),
                 ('Reverse:', c.reverse),
                 ('Hand brake:', c.hand_brake),
-                ('Manual:', c.manual_gear_shift),
+                ('M override:', self.manual_override),
                 'Gear:        %s' % {-1: 'R', 0: 'N'}.get(c.gear, c.gear)]
         elif isinstance(c, carla.WalkerControl):
             self._info_text += [
@@ -281,51 +292,89 @@ class HUD(object):
             '',]
     
         self._info_text += [
+            'Rule: ',
             'Number of lane invasion: % 4d' % self.invasion
             ]
         self._info_text += [
-            'Number of collision: % 4d' % self.collision
+            'Number of collision: % 8d' % self.collision
             ]
         self._info_text += [
-            'Number of cross Red TL: % 4d' % self.crossRTL
+            'Cross red traffic light: % 4d' % self.crossRTL
             ]
         self._info_text += [
-            'Number of cross Red TL: % 4d' % self.crossRTL
+            'Cross stop sign: % 12d' % self.crossStop
+        ]
+        self._info_text += [
+            'Exceed speed limit: % d' % self.exceedSpeed
             ]
         self._info_text += [
             'Score: % 4d' % self.score
             ]
         self._info_text += [
-            'Traffic sign detected (stop): % 4d' % self.detectedTSDStop
+            '',
+            "Dev: "
             ]
         self._info_text += [
-            'TSD (Speed Limited): % 4d' % self.detectedTSDSpeed
+            'Traffic sign detected:',
+            '    Stop: % 12d' % self.detectedTSDStop
             ]
         self._info_text += [
-            'TSD (Direct): % 4d' % self.detectedTSDDirect
+            '    Speed Limited: % 3d' % self.detectedTSDSpeed
             ]
         self._info_text += [
-            'Traffic light detected: % 4d' % self.detectedTrafficLight
+            '    Direct: % 10d' % self.detectedTSDDirect
             ]
         self._info_text += [
-            'Pedestrian detected: % 4d' % self.detectedPedestrian
+            'Traffic light detected: % 3d' % self.detectedTrafficLight
             ]
         self._info_text += [
-            'Car detected: % 4d' % self.detectedCar
+            'Pedestrian detected: % 6d' % self.detectedPedestrian
             ]
         self._info_text += [
-            'Weather detected: % 4d' % self.detectedWeather
+            'Car detected: % 13d' % self.detectedCar
             ]
         self._info_text += [
-            'Door open detected: % 4d' % self.detectedDoor
+            'Weather detected: % 9d' % self.detectedWeather
+            ]
+        self._info_text += [
+            'Door open detected: % 7d' % self.detectedDoor
             ]
     def toggle_info(self):
         self._show_info = not self._show_info
 
-    def minus_score(self, score_minus):
-        self.score = self.score - score_minus
-        time.sleep(0.1)
+    def short_minus_score(self, score_minus):
+        if (time.time() - self.short_time_distance >= 0.5):
+            self.score = self.score - score_minus
+            self.short_time_distance = time.time()
+            
+    def short_minus_score_invasion(self, score_minus):
+        if (not self.is_apccept_invasion):
+            if (time.time() - self.short_time_distance >= 0.5):
+                self.invasion = self.invasion + 1
+                self.score = self.score - score_minus
+                self.short_time_distance = time.time()
+                self.notification('Crossed line => score - 1', seconds = 1)
+
+    def short_minus_score_collision(self, score_minus, actor_type):
+        if (not self.is_apccept_collision ):
+            if (time.time() - self.short_time_distance >= 0.5):
+                self.collision+=1
+                self.score = self.score - score_minus
+                self.short_time_distance = time.time()
+                self.notification('Collision with %r => score - 1' % actor_type)
         
+    def long_minus_score(self, score_minus):
+        if (time.time() - self.long_time_distance > 1):
+            self.score = self.score - score_minus
+            self.long_time_distance = time.time()
+
+    def long_minus_score_with_condition(self, score_minus):
+        if (self.is_minus or self.is_minus_1):
+            if (time.time() - self.long_time_distance > 1):
+                self.exceedSpeed = self.exceedSpeed + 1
+                self.score = self.score - score_minus
+                self.long_time_distance = time.time()
+
     def notification(self, text, seconds=2.0):
         self._notifications.set_text(text, seconds=seconds)
 
@@ -463,11 +512,9 @@ class CollisionSensor(object):
         impulse = event.normal_impulse
         intensity = math.sqrt(impulse.x**2 + impulse.y**2 + impulse.z**2)
         # print(intensity)
-        if (intensity > 500):
+        if (intensity > 400):
         # self.hud.score = self.hud.score - 1
-            self.hud.minus_score(1)
-            self.hud.collision+=1
-            self.hud.notification('Collision with %r => score - 1' % actor_type)
+            self.hud.short_minus_score_collision(1, actor_type)
         self.history.append((event.frame, intensity))
         if len(self.history) > 4000:
             self.history.pop(0)
@@ -496,11 +543,10 @@ class LaneInvasionSensor(object):
         self = weak_self()
         if not self:
             return
-        self.hud.invasion = self.hud.invasion + 1
         lane_types = set(x.type for x in event.crossed_lane_markings)
         text = ['%r' % str(x).split()[-1] for x in lane_types]
-        self.hud.score = self.hud.score - 1
-        self.hud.notification('Crossed line => score - 1', seconds = 1)
+        self.hud.short_minus_score_invasion(1)
+        
         
 
 # ==============================================================================
@@ -544,7 +590,7 @@ class ObstacleDetector(object):
         #     return
         # type_ids = set(x.type_id for x in event.other_actor)
         # text = ['%r' % str(x).split()[-1] for x in type_ids]
-        self.hud.notification(get_actor_display_name(event.other_actor))
+        # self.hud.notification(get_actor_display_name(event.other_actor))
 
 # class Obstacle_Sensor(object):
 #     def __init__(self, parent_actor):
@@ -708,8 +754,9 @@ class CameraManager(object):
 
 
 class DualControl(object):
-    def __init__(self, parent):
+    def __init__(self, parent, _hud):
         # start_in_autopilot
+        self.hud = _hud
         self._parent = parent
         self._steer_cache = 0.0
         self._control = carla.VehicleControl()
@@ -747,17 +794,17 @@ class DualControl(object):
             # self._gear_R = int(self._parser.get('G29 Racing Wheel', 'gear_R'))
 
             self._steer_idx = 0
-            self._throttle_idx = 2
-            self._brake_idx = 3
-            self._reverse_idx = 5
-            self._handbrake_idx = 4
+            self._throttle_idx = 5
+            self._brake_idx = 4
+            self._reverse_idx = 2
+            self._handbrake_idx = 3
             
             self._gear_1 = 12
-            self._gear_2 = 13
+            self._gear_2 = 4
             self._gear_3 = 14
             self._gear_4 = 15
             self._gear_5 = 16
-            self._gear_R = 17
+            self._gear_R = 5
 
     def create_pedestrian(self, world, location, end_point):
         # Get the blueprint library
@@ -775,6 +822,31 @@ class DualControl(object):
         # Move the pedestrian along the defined path
         thread = threading.Thread(target=self.move_pedestrian_along_path, args=(pedestrian, location, end_point))
 
+        thread1 = threading.Thread(target=self.create_pedestrian_1, args=(world, location, end_point))
+
+        # Start the thread
+        thread.start()
+
+        thread1.start()
+    
+    def create_pedestrian_1(self, world, location, end_point):
+
+        time.sleep(2)
+        # Get the blueprint library
+        blueprint_library = world.get_blueprint_library()
+
+        # Choose a random pedestrian model from the blueprint library
+        pedestrian_bp = random.choice(blueprint_library.filter('walker.pedestrian.*'))
+
+        # Set the spawn location and rotation
+        transform = carla.Transform(location, carla.Rotation(yaw=0))
+
+        # Spawn the pedestrian
+        pedestrian = world.spawn_actor(pedestrian_bp, transform)
+
+        # Move the pedestrian along the defined path
+        thread = threading.Thread(target=self.move_pedestrian_along_path_1, args=(pedestrian, location, end_point))
+
         # Start the thread
         thread.start()
         
@@ -788,7 +860,30 @@ class DualControl(object):
         pedestrian.apply_control(pedestrian_control)
 
 
-        while (pedestrian.get_location().distance(end_point) > 20.0):
+        while (pedestrian.get_location().distance(end_point) > 16.0):
+            time.sleep(1)
+        pedestrian_control1 = carla.WalkerControl()
+        pedestrian_control1.speed = 0
+        pedestrian.apply_control(pedestrian_control1)
+
+        while (pedestrian.get_location().distance(self._parent.vehicle_controller.vehicle.get_transform().location) > 15):
+            time.sleep(1)
+        time.sleep(8)
+        pedestrian.apply_control(pedestrian_control)
+        time.sleep(15)
+        pedestrian.destroy()
+
+    def move_pedestrian_along_path_1(self, pedestrian, start_point, end_point):
+        # Move the pedestrian along the predefined path
+        # print(pygame.time.Clock().tick())
+        pedestrian.set_simulate_physics(True)
+        pedestrian_control = carla.WalkerControl()
+        pedestrian_control.speed = 1.4
+        pedestrian_control.direction = (end_point - start_point).make_unit_vector()
+        pedestrian.apply_control(pedestrian_control)
+
+
+        while (pedestrian.get_location().distance(end_point) > 19.0):
             time.sleep(1)
         pedestrian_control1 = carla.WalkerControl()
         pedestrian_control1.speed = 0
@@ -803,8 +898,8 @@ class DualControl(object):
 
     def create_pedestria_1(self, world):
         # Define the start and end points of the crosswalk
-        start_point = carla.Location(x=42, y=-11, z=1)  # Adjust the coordinates as needed
-        end_point = carla.Location(x=42, y=13, z=0.5)  # Adjust the coordinates as needed
+        start_point = carla.Location(x=43, y=-11, z=1)  # Adjust the coordinates as needed
+        end_point = carla.Location(x=43, y=13, z=0.5)  # Adjust the coordinates as needed
 
         # Create a path for the pedestrian
         path = [start_point, carla.Location(start_point.x, end_point.y, end_point.z), end_point]
@@ -814,10 +909,7 @@ class DualControl(object):
 
     def create_car_1(self, world):
         # Define the start and end points of the crosswalk
-        start_point = carla.Location(x=66.5, y=5.1, z=1)  # Adjust the coordinates as needed
-        end_point = carla.Location(x=42, y=13, z=0.5)  # Adjust the coordinates as needed
-
-        # blueprint = random.choice(world.get_blueprint_library().filter('vehicle.dodge.charger_2020'))
+        start_point = carla.Location(x=75.5, y=9.8, z=1)  # Adjust the coordinates as needed
 
         blueprint = random.choice(world.get_blueprint_library().filter("vehicle.ford.ambulance"))
         if blueprint.has_attribute("driver_id"):
@@ -830,7 +922,7 @@ class DualControl(object):
         except IndexError:
             pass
         vehicle_init_position  = [
-            carla.Transform(start_point, carla.Rotation(yaw=-2))]
+            carla.Transform(start_point, carla.Rotation(yaw=-5))]
 
         self.vehicle_1 = world.spawn_actor(blueprint, vehicle_init_position[0])
 
@@ -841,9 +933,11 @@ class DualControl(object):
 
     def control_car_1(self):
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
-        time.sleep(4.6)
+        time.sleep(4.3)
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=0.0, brake=1.0))
-        time.sleep(4)
+        while (self.vehicle_1.get_location().distance(self._parent.vehicle_controller.vehicle.get_transform().location) > 10):
+            time.sleep(3)
+        # time.sleep(4)
         self.vehicle_1.apply_control(carla.VehicleControl(throttle=1, steer=0.0))
         time.sleep(10)
         self.vehicle_1.destroy()
@@ -942,10 +1036,19 @@ class DualControl(object):
                     # vehicle.set_autopilot(True)
                     # vehicle.enable_constant_velocity(carla.Vector3D(2, 0, 0))
                     self.create_car_1(world_carla)
+                elif event.key == K_SPACE:
+                    self.hud.is_start = 0
+                    self.hud.is_apccept_collision = 0
+                    self.hud.is_apccept_invasion = 0
+                    new_location = carla.Location(x=-131.5, y=17.4, z=0.1)
+                    new_transform = carla.Transform(new_location, carla.Rotation(yaw=90))
+                    self._parent.vehicle_controller.vehicle.set_transform(new_transform)
+                    self._parent.vehicle_controller.open_random_door()
                 elif event.key == K_o:
                     # self._parent.is_parking = 1 if self._parent.is_parking == 0 else 0
                     # self._parent.state = 0 if self._parent.state == -1 else -1
                     self.create_pedestria_1(world_carla)
+
                 elif event.key == K_r:
                     self._parent.release_control = 1
                 elif event.key == K_t:
@@ -1013,14 +1116,14 @@ class DualControl(object):
 
         K2 = 1.6  # 1.6
         throttleCmd = K2 + (2.05 * math.log10(
-            -0.7 * jsInputs[self._throttle_idx] + 1.4) - 1.2) / 0.92
+            -0.7 * -1 *jsInputs[self._throttle_idx] + 1.4) - 1.2) / 0.92
         if throttleCmd <= 0:
             throttleCmd = 0
         elif throttleCmd > 1:
             throttleCmd = 1
 
         brakeCmd = 1.6 + (2.05 * math.log10(
-            -0.7 * jsInputs[self._brake_idx] + 1.4) - 1.2) / 0.92
+            -0.7 * -1 * jsInputs[self._brake_idx] + 1.4) - 1.2) / 0.92
         if brakeCmd <= 0:
             brakeCmd = 0
         elif brakeCmd > 1:

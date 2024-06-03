@@ -2,8 +2,9 @@
 
 import rospy
 import json
+import math
 from std_msgs.msg import String
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, Bool
 from std_msgs.msg import Float32
 from carla_msgs.msg import CarlaEgoVehicleControl
 from carla_msgs.msg import (CarlaEgoVehicleStatus, CarlaEgoVehicleInfo, CarlaWorldInfo, CarlaEgoVehicleObstacle,
@@ -13,6 +14,9 @@ from config_param import RoundOneScenario
 
 class RosConnect():
     def __init__(self, _vehicle_controller):
+        self.hud = None
+        self.status_light_1 = 0
+        self.status_light_2 = 0
         self.roundOneScenario = RoundOneScenario()
         self.vehicle_controller = _vehicle_controller
         self.tfl_134_status = 0
@@ -34,17 +38,48 @@ class RosConnect():
         self.pub_weather_status = rospy.Publisher('/carla/weather_status', String, queue_size=10)
         self.pub_traffic_sign_info = rospy.Publisher('/carla/traffic_sign_info', CarlaTrafficSignList, queue_size=10)
         self.pub_traffic_light_status = rospy.Publisher('/carla/traffic_light_status', CarlaTrafficLightList, queue_size=10)
+        self.pub_obstacle_distance = rospy.Publisher('/carla/hero/obstacle', CarlaEgoVehicleObstacle, queue_size=10)
         self.pub_steer = rospy.Publisher('steering', String, queue_size=10)
         self.pub_brake = rospy.Publisher('brake', String, queue_size=10)
         self.pub_speed = rospy.Publisher('speed', String, queue_size=10)
-        self.pub_obstacle_distance = rospy.Publisher('/carla/hero/obstacle', CarlaEgoVehicleObstacle, queue_size=10)
 
+        rospy.Subscriber('/carla/dev_trigger', String, self.dev_trigger)
         rospy.Subscriber('/carla/hero/vehicle_control_light', String, self.control_light)
         rospy.Subscriber('/carla/hero/vehicle_toggle_FR_door', Int32, self.toggle_FR_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_FL_door', Int32, self.toggle_FL_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_RR_door', Int32, self.toggle_RR_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_RL_door', Int32, self.toggle_RL_door)
         rospy.Subscriber('/carla/traffic_light/status', CarlaTrafficLightStatusList, self.get_traffic_status)
+        rospy.Subscriber('/carla/hero/vehicle_control_manual_override', Bool, self.get_manual)
+
+    def take_hud(self, _hud):
+        self.hud = _hud
+
+    def distance(self, x1, y1, x2, y2):
+        return math.sqrt((x2-x1)**2 + (y2 - y1)**2)
+    
+    def get_manual(self, msg):
+        if (msg.data):
+            self.hud.manual_override = True
+        else:
+            self.hud.manual_override = False
+    def dev_trigger(self, msg):
+        if (msg.data == "stop"):
+            self.hud.detectedTSDStop = 1
+        elif(msg.data == "speed"):
+            self.hud.detectedTSDSpeed = 1
+        elif(msg.data == "direct"):
+            self.hud.detectedTSDDirect = 1
+        elif(msg.data == "tl"):
+            self.hud.detectedTrafficLight = 1
+        elif(msg.data == "pedestrian"):
+            self.hud.detectedPedestrian = 1
+        elif(msg.data == "car"):
+            self.hud.detectedCar = 1
+        elif(msg.data == "weather"):
+            self.hud.detectedWeather = 1
+        elif(msg.data == "door"):
+            self.hud.detectedDoor = 1
 
     def toggle_FR_door(self, msg):
         if (msg.data):
@@ -66,6 +101,24 @@ class RosConnect():
         msg = rospy.wait_for_message(
             "/carla/traffic_light/info", CarlaTrafficLightInfoList, timeout=10)
         self.traffic_light_info = msg
+        index = 0
+        self.index_1 = 0
+        self.index_2 = 0
+        self.distance_1 = 1000
+        self.distance_2 = 1000
+        for traffic_info in self.traffic_light_info.traffic_lights:
+            if (self.distance(traffic_info.transform.position.x, traffic_info.transform.position.y, self.roundOneScenario.traffic_light_transform[0].location.x,\
+                               self.roundOneScenario.traffic_light_transform[0].location.y) < self.distance_1):
+                self.index_1 = index
+                self.distance_1 = self.distance(traffic_info.transform.position.x, traffic_info.transform.position.y, self.roundOneScenario.traffic_light_transform[0].location.x,\
+                               self.roundOneScenario.traffic_light_transform[0].location.y)
+            if (self.distance(traffic_info.transform.position.x, traffic_info.transform.position.y, self.roundOneScenario.traffic_light_transform[1].location.x,\
+                               self.roundOneScenario.traffic_light_transform[1].location.y) < self.distance_2):
+                self.index_2 = index
+                self.distance_2 = self.distance(traffic_info.transform.position.x, traffic_info.transform.position.y, self.roundOneScenario.traffic_light_transform[1].location.x,\
+                               self.roundOneScenario.traffic_light_transform[1].location.y)
+            index+=1
+        # print(self.index_1, self.index_2, self.traffic_light_info.traffic_lights[self.index1])
 
     def set_obstacle(self, obstacle_actor, obstacle_distance):
         self.obstacle_actor = obstacle_actor
@@ -114,17 +167,22 @@ class RosConnect():
     def get_traffic_status(self, message):
         try:
             index = 0
+            
             self.traffic_light_list.traffic_lights = []
             for traffic_status in message.traffic_lights:
                 traffic_light = CarlaTrafficLight()
                 traffic_light.id = traffic_status.id
                 traffic_light.state = traffic_status.state
                 traffic_light.transform = self.traffic_light_info.traffic_lights[index].transform
+                # if (traffic_light.transform.position.x)
+                
                 index = index + 1
                 self.traffic_light_list.traffic_lights.append(traffic_light)
                 # print(index)
             self.pub_traffic_light_status.publish(self.traffic_light_list)
-            # print(self.traffic_light_list)
+            self.status_light_1 = self.traffic_light_list.traffic_lights[self.index_1]
+            self.status_light_2 = self.traffic_light_list.traffic_lights[self.index_2]
+            # print(self.status_light_1, self.status_light_2)
         except Exception as e:
             print("Error:", str(e))
     

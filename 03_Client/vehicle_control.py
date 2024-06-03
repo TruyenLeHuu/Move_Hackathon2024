@@ -34,8 +34,8 @@ class Vehicle_Control():
         ap = random.choice(blueprint_library.filter('vehicle.dodge.charger_2020'))
 
         ap.set_attribute('role_name', "hero")
-        new_location = carla.Location(x=-33.8, y=6.4, z=0.5)
-        new_transform = carla.Transform(new_location, carla.Rotation(yaw=0))
+        new_location = carla.Location(x=-246.8, y=-35.2, z=12)
+        new_transform = carla.Transform(new_location, carla.Rotation(yaw=90))
         
         # blueprint = random.choice(self.get_actor_blueprints(world, 'vehicle.*', "2"))
         # blueprint.set_attribute('role_name', "ego_vehicle")
@@ -90,6 +90,7 @@ class Vehicle_Control():
         print(self.vehicle.get_physics_control().wheels[2].position.x)
         print(self.vehicle.get_physics_control().wheels[2].position.y)
         print("wheelbase", wheelbase)
+
     def destroy(self):
         """
         destroy all the actors
@@ -162,6 +163,42 @@ class Vehicle_Control():
             self.vehicle.open_door(carla.VehicleDoor.All)
         else:
             self.vehicle.close_door(carla.VehicleDoor.All)
+
+    def open_random_door(self):
+        rl = 0
+        rr = 0
+        fl = 0
+        fr = 0
+        while (not (rl or rr or fl or fr)):
+            rl = random.randint(0, 1)
+            rr = random.randint(0, 1)
+            fl = random.randint(0, 1)
+            fr = random.randint(0, 1)
+        
+        if(rl):
+            self.door_status.RL = "Open"
+            self.vehicle.open_door(carla.VehicleDoor.RL)
+        else:
+            self.door_status.RL = "Close"
+            self.vehicle.close_door(carla.VehicleDoor.RL)
+        if(rr):
+            self.door_status.RR = "Open"
+            self.vehicle.open_door(carla.VehicleDoor.RR)
+        else:
+            self.door_status.RR = "Close"
+            self.vehicle.close_door(carla.VehicleDoor.RR)
+        if(fl):
+            self.door_status.FL = "Open"
+            self.vehicle.open_door(carla.VehicleDoor.FL)
+        else:
+            self.door_status.FL = "Close"
+            self.vehicle.close_door(carla.VehicleDoor.FL)
+        if(fr):
+            self.door_status.FR = "Open"
+            self.vehicle.open_door(carla.VehicleDoor.FR)
+        else:
+            self.door_status.FR = "Close"
+            self.vehicle.close_door(carla.VehicleDoor.FR)
 
     def get_door_status(self):
         return self.door_status
