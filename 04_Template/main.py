@@ -8,7 +8,8 @@ def main():
     """
     try:
         VM = VehicleMotionAPI()
-        time.sleep(1)
+        """ Set team name here """
+        VM.General.vehicle_set_team_name("Unknown")
         while (not VM.General.exit_flag):
             """ Begin application code """
             # VM.General.vehicle_control_manual_override(True)
@@ -16,10 +17,10 @@ def main():
             # VM.General.vehicle_control_manual(throttle=1, brake=0)
             # time.sleep(1)
             # VM.General.vehicle_control_manual(throttle=0, brake=1)
-            VM.General.dev_detect_door()
-            time.sleep(0.01)
+            # VM.General.dev_detect_door()
+            print(VM.General.get_vehicle_door())
+            time.sleep(1)
             # VM.General.vehicle_control_manual_override(False)
-            break
             """ End application code """
     except KeyboardInterrupt:
         print("Shutting down")

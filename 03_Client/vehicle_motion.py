@@ -177,6 +177,7 @@ class IMUSensor(object):
         self.compass = math.degrees(sensor_data.compass)
 class HUD(object):
     def __init__(self, width, height, _ros):
+        self.team_name = "Null"
         self.invasion = 0
         self.collision = 0
         self.crossRTL = 0
@@ -262,6 +263,7 @@ class HUD(object):
         self._info_text = [
             'Server:  % 16.0f FPS' % self.server_fps,
             '',
+            'Team: % 20s' % self.team_name,
             'Vehicle: % 20s' % get_actor_display_name(player, truncate=20),
             'Map:     % 20s' % world.world.get_map().name.split('/')[-1],
             'Run time: % 18s' % datetime.timedelta(seconds=int(self.simulation_time)),

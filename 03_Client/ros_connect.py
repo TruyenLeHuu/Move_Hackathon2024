@@ -47,6 +47,7 @@ class RosConnect():
         rospy.Subscriber('/carla/hero/vehicle_control_light', String, self.control_light)
         rospy.Subscriber('/carla/hero/vehicle_control_haz_light', String, self.control_haz_light)
         rospy.Subscriber('/carla/hero/vehicle_control_brake_light', String, self.control_brake_light)
+        rospy.Subscriber('/carla/hero/set_team_name', String, self.set_team_name)
         rospy.Subscriber('/carla/hero/vehicle_toggle_FR_door', Int32, self.toggle_FR_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_FL_door', Int32, self.toggle_FL_door)
         rospy.Subscriber('/carla/hero/vehicle_toggle_RR_door', Int32, self.toggle_RR_door)
@@ -60,6 +61,9 @@ class RosConnect():
     def distance(self, x1, y1, x2, y2):
         return math.sqrt((x2-x1)**2 + (y2 - y1)**2)
     
+    def set_team_name(self, msg):
+        self.hud.team_name = msg.data
+
     def get_manual(self, msg):
         if (msg.data):
             self.hud.manual_override = True
