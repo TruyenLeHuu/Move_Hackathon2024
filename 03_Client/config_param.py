@@ -77,8 +77,8 @@ class RoundOneScenario():
 
             self.limit_speed_stop = [
                 (92, 41),  # Point 1 (x, y)
-                (92, 44.5),  # Point 2 (x, y)
-                (109, 44.5),  # Point 3 (x, y)
+                (92, 47.5),  # Point 2 (x, y)
+                (109, 47.5),  # Point 3 (x, y)
                 (109, 41)   # Point 4 (x, y)
             ]
 
@@ -88,6 +88,21 @@ class RoundOneScenario():
                 (90, -10),  # Point 3 (x, y)
                 (80, -10)   # Point 4 (x, y)
             ]
+
+            self.goal_area = [
+                (-170, 9),  # Point 1 (x, y)
+                (-170, -6.6),  # Point 2 (x, y)
+                (-178, -6.6),  # Point 3 (x, y)
+                (-178, 9)   # Point 4 (x, y)
+            ]
+
+            self.free_area = [
+                (17.7, 9.4),  # Point 1 (x, y)
+                (17.7, -8.4),  # Point 2 (x, y)
+                (20.7, -8.4),  # Point 3 (x, y)
+                (20.7, 9.4)   # Point 4 (x, y)
+            ]
+            
 
             self.parking_first_point = 0.0
             self.vehicle_init_position  = [
@@ -117,7 +132,7 @@ class RoundOneScenario():
             tranform1.position.z = 0.05
 
             tranform2 = Pose()
-            tranform2.position.x = 14
+            tranform2.position.x = 11.8
             tranform2.position.y = 98.6
             tranform2.position.z = 0.05
 
@@ -136,6 +151,11 @@ class RoundOneScenario():
             tranform4.position.y = 11
             tranform4.position.z = 0.05
 
+            tranform5 = Pose()
+            tranform5.position.x = 110.2
+            tranform5.position.y = 48.4
+            tranform5.position.z = 0.05
+
 
             self.stop_sign = CarlaTrafficSign()
             self.stop_sign.id = 1
@@ -149,7 +169,7 @@ class RoundOneScenario():
 
             self.sign_speed_limited_90 = CarlaTrafficSign()
             self.sign_speed_limited_90.id = 3
-            self.sign_speed_limited_90.transform = tranform
+            self.sign_speed_limited_90.transform = tranform5
             self.sign_speed_limited_90.type = sign_speed_limited_90
 
             self.sign_direct_left_turn = CarlaTrafficSign()
@@ -162,11 +182,11 @@ class RoundOneScenario():
             self.sign_direct_left_turn_1.transform = tranform4
             self.sign_direct_left_turn_1.type = sign_direct_left_turn
 
-            self.sign_prohibiting_left_turn = CarlaTrafficSign()
-            self.sign_prohibiting_left_turn.id = 6
-            self.sign_prohibiting_left_turn.transform = tranform2
-            self.sign_prohibiting_left_turn.type = sign_prohibiting_left_turn
+            self.sign_prohibiting_right_turn = CarlaTrafficSign()
+            self.sign_prohibiting_right_turn.id = 6
+            self.sign_prohibiting_right_turn.transform = tranform2
+            self.sign_prohibiting_right_turn.type = sign_prohibiting_right_turn
             
-            self.traffic_sign_list = CarlaTrafficSignList([self.stop_sign, self.sign_speed_limited_30, self.sign_speed_limited_90, self.sign_direct_left_turn, self.sign_direct_left_turn_1, self.sign_prohibiting_left_turn])
+            self.traffic_sign_list = CarlaTrafficSignList([self.stop_sign, self.sign_speed_limited_30, self.sign_speed_limited_90, self.sign_direct_left_turn, self.sign_direct_left_turn_1, self.sign_prohibiting_right_turn])
             # print(self.traffic_sign_list)
 

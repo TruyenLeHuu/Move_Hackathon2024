@@ -279,6 +279,7 @@ class HUD(object):
                 ('Brake:', c.brake, 0.0, 1.0),
                 ('Reverse:', c.reverse),
                 ('Hand brake:', c.hand_brake),
+                ('Manual:', c.manual_gear_shift),
                 ('M override:', self.manual_override),
                 'Gear:        %s' % {-1: 'R', 0: 'N'}.get(c.gear, c.gear)]
         elif isinstance(c, carla.WalkerControl):
@@ -295,9 +296,9 @@ class HUD(object):
             'Rule: ',
             'Number of lane invasion: % 4d' % self.invasion
             ]
-        self._info_text += [
-            'Number of collision: % 8d' % self.collision
-            ]
+        # self._info_text += [
+        #     'Number of collision: % 8d' % self.collision
+        #     ]
         self._info_text += [
             'Cross red traffic light: % 4d' % self.crossRTL
             ]
@@ -367,6 +368,7 @@ class HUD(object):
         if (time.time() - self.long_time_distance > 1):
             self.score = self.score - score_minus
             self.long_time_distance = time.time()
+            self.crossRTL+=1
 
     def long_minus_score_with_condition(self, score_minus):
         if (self.is_minus or self.is_minus_1):
@@ -1038,7 +1040,7 @@ class DualControl(object):
                     self.create_car_1(world_carla)
                 elif event.key == K_SPACE:
                     self.hud.is_start = 0
-                    self.hud.is_apccept_collision = 0
+                    self.hud.is_apccept_collision = 1
                     self.hud.is_apccept_invasion = 0
                     new_location = carla.Location(x=-131.5, y=17.4, z=0.1)
                     new_transform = carla.Transform(new_location, carla.Rotation(yaw=90))
