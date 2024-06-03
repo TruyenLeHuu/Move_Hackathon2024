@@ -94,6 +94,7 @@ class Scenario_Runner():
         vehicle_point = (vehicle_location.x, vehicle_location.y)
         return self.is_point_in_polygon(vehicle_point, self.roundOneScenario.pedestrian_area_1)
 
+
     def check_traffic_light_1(self, vehicle, hud, ros):
         if (self.is_vehicle_in_traffic_area_1(vehicle)):
             if (not self.is_pass_traffic_1 and ros.status_light_1.state == 0):
