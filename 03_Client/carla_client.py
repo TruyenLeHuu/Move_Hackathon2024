@@ -47,7 +47,7 @@ class CarlaClient():
         self._reverse = 0
         self.manual_gear_shift = False
         self.gear = 0
-
+ 
         rospy.loginfo('Step 0 - Set up scenarios DONE')
         time.sleep(2)
     
@@ -62,6 +62,7 @@ class CarlaClient():
             display = pygame.display.set_mode(
             # (1840, 1080),
             (1500, 800),
+            # (1000, 800),
             pygame.HWSURFACE | pygame.DOUBLEBUF)
             self.vehicle_controller.create_car(world_carla)
             hud = HUD(1500, 800, self.ros_connection)
@@ -70,6 +71,17 @@ class CarlaClient():
             controller = DualControl(self, hud)
             clock = pygame.time.Clock()
             self.is_traffic_1 = False
+            # traffic_lights = [actor for actor in world_carla.get_actors() if 'traffic_light' in actor.type_id]
+            # for tl in traffic_lights:
+            #     # print(tl.get_red_time())
+            #     # print(tl.get_yellow_time())
+            #     # print(tl.get_green_time())
+            #     # tl.set_state(carla.TrafficLightState.Red)
+            #     tl.set_red_time(5)
+            #     # tl.set_state(carla.TrafficLightState.Yellow)
+            #     tl.set_yellow_time(2)
+            #     # tl.set_state(carla.TrafficLightState.Green)
+            #     tl.set_green_time(7)
             while True:
                 clock.tick_busy_loop(60)
                 self.ros_connection.publish_status()
@@ -80,20 +92,20 @@ class CarlaClient():
                 self.scenario_runner.check_speed_limited_2(self.vehicle_controller.vehicle, hud)
                 self.scenario_runner.check_pedestrian_1(self.vehicle_controller.vehicle, controller, world_carla)
                 self.scenario_runner.check_traffic_light_1(self.vehicle_controller.vehicle, hud, self.ros_connection)
-                self.scenario_runner.check_traffic_light_2(self.vehicle_controller.vehicle, hud, self.ros_connection)
+                # self.scenario_runner.check_traffic_light_2(self.vehicle_controller.vehicle, hud, self.ros_connection)
                 self.scenario_runner.check_goal_area(self.vehicle_controller.vehicle, hud)
                 self.scenario_runner.check_free_area(self.vehicle_controller.vehicle, hud)
-                
+
                 hud.long_minus_score_with_condition(1)
                 # self.ros_connection.keep_topic_alive()
-                if (self.scenario_runner.is_vehicle_in_weather_area_1(self.vehicle_controller.vehicle)):
-                    # if (world_carla.get_weather() != carla.WeatherParameters.ClearNight):
-                    self.ros_connection.set_weather("ClearNight")
-                    world_carla.set_weather(carla.WeatherParameters.ClearNight)
-                else:
-                    # if (world_carla.get_weather() != carla.WeatherParameters.Default):
-                    world_carla.set_weather(carla.WeatherParameters.Default)
-                    self.ros_connection.set_weather("ClearDay")
+                # if (self.scenario_runner.is_vehicle_in_weather_area_1(self.vehicle_controller.vehicle)):
+                #     # if (world_carla.get_weather() != carla.WeatherParameters.ClearNight):
+                #     self.ros_connection.set_weather("ClearNight")
+                #     world_carla.set_weather(carla.WeatherParameters.ClearNight)
+                # else:
+                #     # if (world_carla.get_weather() != carla.WeatherParameters.Default):
+                #     world_carla.set_weather(carla.WeatherParameters.Default)
+                #     self.ros_connection.set_weather("ClearDay")
 
                 if controller.parse_events(world, clock, self.vehicle_controller.vehicle, world_carla):
                     return

@@ -122,28 +122,23 @@ class RoundOneScenario():
             #   Prohibiting left turn = 9
             #   Prohibiting straight turn = 10
             tranform = Pose()
-            tranform.position.x = 265
-            tranform.position.y = -10
+            tranform.position.x = -86.3
+            tranform.position.y = 89.4
             tranform.position.z = 0.05
 
             tranform1 = Pose()
-            tranform1.position.x = -143
+            tranform1.position.x = -134
             tranform1.position.y = 73.8
             tranform1.position.z = 0.05
 
             tranform2 = Pose()
-            tranform2.position.x = 11.8
+            tranform2.position.x = 16.8
             tranform2.position.y = 98.6
             tranform2.position.z = 0.05
 
             tranform3 = Pose()
             tranform3.position.x = 43.6
             tranform3.position.y = 99.4
-            tranform3.position.z = 0.05
-
-            tranform3 = Pose()
-            tranform3.position.x = 110
-            tranform3.position.y = 30.4
             tranform3.position.z = 0.05
 
             tranform4 = Pose()
@@ -153,7 +148,7 @@ class RoundOneScenario():
 
             tranform5 = Pose()
             tranform5.position.x = 110.2
-            tranform5.position.y = 48.4
+            tranform5.position.y = 47.4
             tranform5.position.z = 0.05
 
 

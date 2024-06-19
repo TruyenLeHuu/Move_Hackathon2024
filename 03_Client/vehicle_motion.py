@@ -566,7 +566,7 @@ class ObstacleDetector(object):
         world = self._parent.get_world()
         bp = world.get_blueprint_library().find('sensor.other.obstacle')
         bp.set_attribute("only_dynamics",str(True))
-        bp.set_attribute("distance",str(20))
+        bp.set_attribute("distance",str(40))
         # bp.set_attribute("debug_linetrace",str(True))
         self.sensor = world.spawn_actor(bp, carla.Transform(), attach_to=self._parent, attachment_type=carla.AttachmentType.Rigid)
         # We need to pass the lambda a weak reference to self to avoid circular
@@ -1048,7 +1048,7 @@ class DualControl(object):
                     new_location = carla.Location(x=-131.5, y=17.4, z=0.1)
                     new_transform = carla.Transform(new_location, carla.Rotation(yaw=90))
                     self._parent.vehicle_controller.vehicle.set_transform(new_transform)
-                    self._parent.vehicle_controller.open_random_door()
+                    # self._parent.vehicle_controller.open_random_door()
                 elif event.key == K_o:
                     # self._parent.is_parking = 1 if self._parent.is_parking == 0 else 0
                     # self._parent.state = 0 if self._parent.state == -1 else -1

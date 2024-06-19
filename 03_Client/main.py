@@ -12,7 +12,7 @@ def main():
     finally:
         if ego_vehicle is not None:
             ego_vehicle.destroy()
-
+ 
 
 if __name__ == '__main__':
     try:
